@@ -1,0 +1,147 @@
+<!-- Snapshot of https://docs.basestonk.io/holding.md taken 2026-10-10T17:22:37.428Z. Live version: https://docs.basestonk.io/holding -->
+
+# Holding a token
+
+> Your dividends, your portfolio, your watchlist, and what the badges on a token mean.
+
+## Your dividends
+
+Dividends on a token you hold arrive automatically. Every trade on the
+token advances a queue of holders by one or two places, and when the
+queue reaches you, your share is delivered - in the basket's assets, or
+in the pair. On Base, the share that came from buys is delivered as the
+token itself.
+
+The token page shows your position under **Your dividends**: what you
+have received, what is waiting, and where you are in line as
+*place N of M, about K trades away*.
+
+**Claim now** pays you immediately instead of waiting for the queue. It
+costs gas and is never required. On Base it calls `claim()`; on Robinhood
+Chain and Arc, `claimFor(you)`.
+
+<Note>
+  Your place in the queue is a fact about the queue, not about your balance. A large holder and a small one are delivered in the same order they were queued.
+</Note>
+
+## Portfolio
+
+[basestonk.io/portfolio](https://basestonk.io/portfolio) reads your
+wallet across every chain. Open it from **Portfolio** in the header, or
+from **View portfolio** in the wallet sheet. The chain menu at the top
+right narrows it to one chain. The page has four tabs.
+
+### Overview
+
+* **Net value.** What your wallet is worth, with the day's move and the
+  word *today*. If some of your holdings have no price yet, the page says
+  so and the figure is a floor.
+* **Trading PnL.** A graph of your profit and loss over time: what you
+  sold for, minus what you paid, plus what you still hold at its last
+  traded price. Drag across it to read any day. Pick **1W**, **1M** or
+  **All**. With no trades yet it draws a flat line at \$0.
+* **Performance.** **Unrealized return**, **Realized return** and
+  **Total return**, in dollars and percent.
+* **Tokens.** Your largest holdings, with **View all tokens**.
+* **Claimable.** Shown only when something is waiting for you: dividends,
+  a vesting release, creator fees, or a \$BSTONK basket round. See
+  [Claiming](#claiming) below.
+* **Recent activity**, with **View all activity**, and your cash
+  balances.
+
+### Tokens
+
+Every BaseStonk token you hold, with **Price**, **Balance**, **Value**,
+**24h**, **PnL** and **Return**. Search by name, symbol or address.
+**Hide dust** hides holdings under \$1. **Closed** adds positions you have
+fully sold. **Export CSV** downloads every position.
+
+### Launches
+
+Tokens you created, with market cap, holders and fees earned, and a
+**Manage** button for each. Below them, **Earnings** lists the dividends
+you have received, by source.
+
+### Activity
+
+Your buys, sells, launches, claims and approvals, newest first, each with
+a link to the transaction. Filter by type and by time (**Last 24 hours**,
+**Last 7 days**, **Last 30 days**), or search by token or transaction.
+**Load more** reaches further back. Trades and launches come from
+BaseStonk's indexer. Claims and approvals appear when you signed them on
+this device.
+
+### Claiming
+
+The **Claimable** card lists up to three items, each with **Open**, which
+takes you to the page where that claim is made. **Review claims** opens
+the full list, grouped by chain, with a box to tick for each. It counts
+the wallet transactions your choice needs, and **Open first selected
+claim** starts with the first one. Nothing is bundled and nothing is
+claimed for you: each claim is its own signature.
+
+## The wallet sheet
+
+Once you are connected, your address in the header is a button. Press it
+to open the wallet sheet:
+
+* your address, with a copy button, a chain menu and a disconnect button
+* your net value and the day's move
+* **Bridge**, which opens the bridge, and **Receive**, which shows your
+  address as a QR code
+* **View portfolio**
+* **Recent activity**, with **View all**, which opens the Activity tab
+
+A small pulsing dot on your address in the header means a transaction is
+still pending. The sheet has no close button: tap outside it, press
+`Escape`, or on a phone swipe it down.
+
+### Sharing a position
+
+Any position opens a **share card**: a 1200x630 image of the token, your
+entry and your return, with a template you can edit. Download it, copy a
+link that carries your referral code, or post straight to X or Telegram.
+
+## Watchlist
+
+Star any token - in the list, on its page, or in search - and it joins
+your watchlist. The list gets a **Watchlist** filter once you have starred
+anything. Up to 50 tokens, kept in your browser.
+
+## Finding a token
+
+* **Search** - press `/` or `Ctrl`/`Cmd`+`K` anywhere. Trending, new,
+  your watchlist and recent tokens, or paste an address.
+* **By symbol** - `basestonk.io/SYMBOL` or `basestonk.io/tokens/$SYMBOL`
+  resolves to the token: the platform's own first, then the largest by
+  market cap. Impersonators are never resolved this way.
+* **Sort and filter** the list by trending, age, market cap, volume or
+  holders; by pair; by launcher generation; by feature (rewards, buyback,
+  auto-liquidity, simple, advanced, OG, platform).
+* **Add to wallet** - the token page's *Contracts & wallets* sheet adds
+  the token to MetaMask and friends in one click.
+
+## The badges
+
+| Badge | Means |
+| - | - |
+| **OG** | the first launch on this chain to use this ticker. Later launches with the same ticker do not get it. |
+| **⚠ Not the real \$X** | the token's name or ticker imitates a protected asset - USDC, USDT, ETH, WBTC, Circle, BaseStonk itself - including look-alike characters. It is still listed and tradeable; the flag is a statement about the name. |
+| **Priced against a namesake** | the *pair* imitates a well-known ticker, and a deeper market of the same name exists at another address. The token page names the deeper one. |
+| **Creator-chosen pair** | the pair is one the creator nominated, not one BaseStonk curated. [Pairs →](/stock-pairs#bring-your-own-pair) |
+| **BASKET REWARDS** | this token pays dividends through a basket of assets rather than in its pair alone. |
+| **Anti-sniper toll** (live meter) | the launch's opening window is still running; the current buy rate and the countdown are shown. |
+
+<Warning>
+  A ticker is not an identity. Anything BaseStonk deployed traces to a launcher on the [contract reference](/integration/contracts); a scanner flag is explained on [token safety](/token-safety).
+</Warning>
+
+## Settings
+
+The gear in the header: dark or light appearance, language (24 to choose
+from), chart in market cap or price, and **launch alerts** - a card and a
+sound whenever a new token launches while the site is open, on this
+network or on all of them.
+
+
+This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

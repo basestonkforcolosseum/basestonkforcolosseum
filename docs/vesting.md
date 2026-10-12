@@ -1,0 +1,98 @@
+<!-- Snapshot of https://docs.basestonk.io/vesting.md taken 2026-10-10T17:22:37.428Z. Live version: https://docs.basestonk.io/vesting -->
+
+# Vesting and takeover
+
+> Locking the dev buy, who controls a token's page, and what happens when a founder disappears.
+
+Same contracts on Base and Robinhood Chain.
+
+## Dev-buy vesting
+
+The dev buy can go into a **vesting vault** instead of the creator's
+wallet. The schedule is public on-chain from the launch transaction, so
+every buyer can read what is locked and until when.
+
+| | |
+| - | - |
+| Duration | 7, 30, 90 or 365 days from the presets, or any duration. **7 days minimum, no maximum.** |
+| Cliff | optional - nothing unlocks before it |
+| Release | linear after the cliff; anyone can trigger what has vested |
+| Cap | **none** - the 10% dev-buy cap applies only to the unvested path |
+| Available in | Simple and Advanced |
+
+<Warning>
+  A vested dev buy is uncapped **by design**. The 10% cap protected buyers from an undisclosed large position; the vault replaces it with a disclosed one. The launcher refuses vesting without a dev buy (`VestRequiresDevBuy`).
+</Warning>
+
+### The vault's rules
+
+| The beneficiary can | The beneficiary cannot |
+| - | - |
+| Extend a schedule | Shorten one - reverts |
+| Lock more tokens under new schedules | Take any out early |
+| Transfer the vault to another address | |
+| Claim the dividends the locked tokens earn | |
+
+### Dividends while locked
+
+Locked tokens still earn holder rewards. Two one-way doors end that
+stream:
+
+| | Effect |
+| - | - |
+| **Renounce** | the locked supply's dividend claim goes to the other holders, forever. No undo, not even by the platform. |
+| **Takeover** (below) | the stream ends the moment the seat moves. The tokens stay the founder's and keep vesting. |
+
+Everything is public state on the vault: each schedule's total, released,
+start, cliff and duration; what a release would send now; whether the
+stream is gone. The factory's `vaultOf(token)` is `address(0)` when the
+dev buy was not vested.
+
+## Who controls the page
+
+**LaunchControl** is the registry of who controls each token's page -
+artwork, description, links. The creator holds the seat by default.
+
+| The seat controls | The seat does not control |
+| - | - |
+| Artwork, description, links | The pool or its liquidity |
+| | Tax rates, split, wedges |
+| | Supply, anyone's holdings |
+
+### Handing over
+
+The controller can transfer the seat directly on-chain, or sign a
+handover that anyone submits for them - it names token, recipient and
+expiry, fits one transfer, and cannot be replayed.
+
+## Community takeover
+
+When a founder is gone, the platform can *propose* a new controller. It
+cannot execute one.
+
+<Steps>
+  <Step title="Propose">
+    The platform names the new controller. A **7-day clock** starts, on-chain.
+  </Step>
+
+  <Step title="Veto window">
+    At any point in the 7 days the current controller can cancel. A founder who is present cannot be removed; this only completes against silence.
+  </Step>
+
+  <Step title="Execute">
+    After 7 days, **anyone** can complete it. The seat moves, and the founder's vault stops earning dividends in the same transaction.
+  </Step>
+</Steps>
+
+| A takeover changes | A takeover cannot change |
+| - | - |
+| Page control | Tax rates, split, wedges |
+| Founder's vault dividend stream - ends | Founder's vested tokens - still theirs, still on schedule |
+| | The pool, holders' balances or earnings |
+
+<Note>
+  The delay plus the veto is the design. A takeover the platform could execute instantly would make the platform the real controller of every token.
+</Note>
+
+
+This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

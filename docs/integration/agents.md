@@ -1,0 +1,263 @@
+<!-- Snapshot of https://docs.basestonk.io/integration/agents.md taken 2026-10-10T17:22:37.428Z. Live version: https://docs.basestonk.io/integration/agents -->
+
+# AI agents
+
+> The machine surface: /api/v1, wallet-signed sessions, and prepared transactions the API never signs.
+
+Versioned paths, coded errors, a published OpenAPI document, and two
+endpoints that assemble a transaction for **your** key to sign.
+
+Working from Claude, ChatGPT or another MCP client? The same prepare
+endpoints are tools on the [MCP server](/integration/mcp), with a sign-in
+button instead of a hand-minted session.
+
+The API is free, and stays free: no key, no plan, no charge per call, with
+or without a bearer.
+
+<Warning>
+  **BaseStonk never signs, relays or broadcasts.** `/prepare` returns an unsigned transaction - `to`, `data`, `value`, `chainId`. Sending is yours. A client waiting for a hash from this API waits forever.
+</Warning>
+
+## `/api/v1`
+
+Every [REST endpoint](/integration/api) is also served under `/api/v1/`
+as a machine contract. Errors are coded -
+`{"error":{"code":"rate_limited","message":"…","retryAfter":21}}`. Lists
+carry `items` and `nextOffset`; pass it back as `offset` and stop at
+`null`. Every response carries `x-bstonk-api-version: 1`, and an
+`Idempotency-Key` header is echoed.
+
+```bash theme={null}
+GET https://api.basestonk.io/api/v1/openapi.json   # OpenAPI 3.1
+GET https://api.basestonk.io/api/v1/llms.txt       # the same, for a context window
+```
+
+<Note>
+  The spec is canonical; this page is orientation. The spec is generated from the route declarations the server registers, and a test holds the two one-to-one, so it cannot drift from the server. `llms.txt` carries the operations tagged `agents`.
+
+  The same document drives the [MCP server](/integration/mcp#one-source-the-openapi-document). Each agent-tier operation (the two prepares and `POST /agent/metadata`) declares its security as `agentBearer` (a bearer from `/agent/session` or Sign-In with Ethereum) or `agentOAuth` with the `prepare` scope (a chat host's sign-in), and `x-mcp-tools` on an operation names the MCP tools that call it.
+</Note>
+
+## Budgets
+
+A bearer buys budget; it never gates. Every read works without one.
+
+| Tier | Budget | Keyed to |
+| - | - | - |
+| anonymous | 1,500 units / 5 min | IP (IPv4 address or IPv6 /64) |
+| bearer | 1,800 units / 5 min | your wallet, per lane |
+| envelope | 1,800 units / 5 min | your IP, across every lane and wallet |
+| minting | 3 sessions / hour | IP |
+
+A bearer spends from the wallet bucket *and* the envelope; the tighter
+one is what `x-ratelimit-remaining` reports. `x-bstonk-identity` says
+which answered - `wallet` or `ip` - and is the only way to notice a
+bearer silently stopped working. `/prepare` costs 10 units.
+
+## Errors
+
+Branch on status and `code`, never on `message`.
+
+| Code | Status | When | Do |
+| - | - | - | - |
+| `invalid_request` | 400 | malformed address, interval or parameter | fix; do not retry unchanged |
+| `validation_failed` | 400 | body failed schema - `detail` names fields | fix the named fields |
+| `unknown_chain` | 400 | not `base` / `robinhood` / `arc` (8453 / 4663 / 5042) | use one of those |
+| `unauthorized` | 401 | signature absent, expired or already used | mint a fresh session |
+| `forbidden` | 403 | bearer lacks the scope, or creator is not the bearer's wallet | sign the right `action`; launch as yourself |
+| `not_found` | 404 | no row | verify; do not loop |
+| `conflict` | 409 | every mined address already holds code | prepare again |
+| *(verdict)* | 422 | a prepare failed its checks - full verdict in the body | read `verdict.checks`, fix, re-prepare |
+| `rate_limited` | 429 | budget exhausted | wait `retryAfter`; never map to empty |
+| `internal` | 500 | unexpected fault | retry once |
+| `unavailable` | 503 | dependency down, or launching closed | capped backoff |
+
+Never sign past `expiresAtBlock` - re-prepare instead.
+
+## Sessions
+
+Keys your budget to your wallet instead of your IP. Sign once, exchange once.
+
+```bash theme={null}
+POST /api/v1/agent/session
+  x-wallet-address:   0xYourWallet
+  x-wallet-signature: <EIP-712 signature>
+  x-wallet-expires:   <unix ms, up to 5 min ahead>
+  { "scopes": ["read"] }              # or ["read","prepare"]
+→ { "token": "v1.…", "wallet": "0x…", "scopes": [...], "expiresAt": … }
+```
+
+| Typed data | |
+| - | - |
+| Domain | `{ name: "BaseStonk", version: "1", chainId: 8453 }` - or `4663` or `5042`; any of the three is accepted |
+| Type | `Authorization { action: string, address: address, expiresAt: uint256, detail: string }` |
+| `action` | `agent:session` for read · `agent:session:prepare` for read + `/prepare` |
+| `detail` | empty |
+
+The scope is in what the wallet signs: a read signature cannot be
+redeemed for prepare.
+
+| Rule | |
+| - | - |
+| One signature, one session | a replay answers `401 signature already used` |
+| Bearers last | 1 hour - `GET /api/v1/agent/whoami` reports identity and scopes without spending a read |
+| Minting | 3 per hour per IP, shared with Sign-In with Ethereum |
+
+This route mints `read` and `prepare` only. The write scopes come from
+Sign-In with Ethereum.
+
+### Sign-In with Ethereum
+
+The same bearer, from a standard EIP-4361 message instead of typed data,
+and the only way to a bearer that can write.
+
+```bash theme={null}
+GET  /api/v1/auth/siwe/nonce
+→ { "nonce": "…", "expiresAt": … }          # single use, 5 minutes
+
+POST /api/v1/auth/siwe
+  { "message": "<the EIP-4361 text, exactly as signed>",
+    "signature": "0x…",
+    "scopes": ["read","prepare"] }          # optional; narrows, never widens
+→ { "token": "v1.…", "wallet": "0x…", "scopes": [...], "expiresAt": … }
+```
+
+| Message field | |
+| - | - |
+| domain | `basestonk.io`, `www.basestonk.io` or `api.basestonk.io` |
+| URI | `https://` on that same domain |
+| Chain ID | `8453`, `4663` or `5042` |
+| Nonce | from `/siwe/nonce` |
+| Resources | one `urn:basestonk:scope:<scope>` line per scope granted |
+
+| Scope | Grants |
+| - | - |
+| `read` | always included; the wallet's own read budget |
+| `prepare` | the `/prepare` endpoints and the agent pinning routes |
+| `upload` | `POST /api/launchpad/images` and `/metadata` in place of the signed headers |
+| `token:edit` | editing any token page the wallet controls |
+| `token:handover` | handing such a page to another wallet |
+
+Scopes are in what the wallet signs, so its own screen lists what it is
+delegating. A message naming none grants `read` only; asking in the body
+for a scope the message did not name is `403`, and an unknown scope is
+`400`. The server re-renders the message and refuses any difference
+(`400 not a canonical EIP-4361 message`), so build it with a SIWE library
+such as viem's `createSiweMessage` and send the text unchanged; the address
+must be checksummed. An EOA signature is checked directly; a smart wallet
+is checked through ERC-1271, or ERC-6492 before it is deployed, on Base.
+
+| Refusal | |
+| - | - |
+| `401` | wrong domain, URI or chain; a nonce that is forged, expired or used; a signature that does not match |
+| `403` | a scope the message did not sign for, or a denied wallet |
+| `429` | the minting lane, or more than 20 requests a minute to `/siwe/*` |
+
+A write bearer is a delegation: `token:edit` edits every page the wallet
+controls, and `token:handover` names no recipient. Ask for it only in a
+session that needs it.
+
+## Prepared transactions
+
+Both endpoints need the `prepare` scope and take `chainId` in the body;
+absent means Base. `tx.chainId` echoes it; `tx.to` is that chain's
+launcher or router.
+
+| `chainId` | `/launch/prepare` | `/trade/prepare` |
+| - | - | - |
+| `8453` Base | ✓ | ✓ |
+| `4663` Robinhood Chain | ✓ | ✓ |
+| `5042` Arc | refused - launch on Arc from the [create page](https://basestonk.io/create) | ✓ |
+
+Any other id is `400 unknown_chain`.
+
+```json theme={null}
+{
+  "intent":         { "…the calldata, decoded…" },
+  "tx":             { "to": "0x…", "data": "0x…", "value": "0", "chainId": 4663, "gas": "1829382" },
+  "approvalTx":     null,
+  "verdict":        { "ok": true, "checks": [ { "id": "…", "ok": true, "detail": "…" } ] },
+  "expiresAtBlock": "50719091",
+  "idempotencyKey": "0x…"
+}
+```
+
+| Field | |
+| - | - |
+| `verdict.checks` | what was actually asked of the chain. A failed check is **HTTP 422 with the full verdict** - never a 200 with a flag. |
+| `gas` | estimate + 25%, or `null` when the simulation failed |
+| `approvalTx` | present when the contract must pull tokens. **Send it, wait for the receipt, then send `tx`.** Approves exactly the amount, never unbounded. `null` once the allowance suffices. |
+| `expiresAtBlock` | \~5 minutes out. Past it, re-prepare. |
+| `idempotencyKey` | a launch: the CREATE2 salt, `keccak256(sender, salt)` - re-preparing returns the same tx or steps to the next free address. A trade: `null` - two identical swaps are two trades. |
+
+### Launch
+
+```bash theme={null}
+POST /api/v1/agent/launch/prepare
+{
+  "chainId": 8453,
+  "name": "My Token", "symbol": "MTK",
+  "pairToken": "0x…", "marketCapUsd": 5000, "metadataUri": "ipfs://…",
+  "buyTaxBps": 100, "sellTaxBps": 100, "maxWalletBps": 250, "devBuyPair": "0"
+}
+```
+
+`"standard": "b20"` asks for a B20 token against a pair that is not itself a B20 (WETH, USDC, any oracle-priced pair); a B20 pair always launches B20. Omit it for an ordinary launch.
+
+The creator is always the bearer's wallet. `devBuyPair` is raw pair
+units; the intent reports it as amount, USD and `percentOfSupplyAtOpen`.
+
+The chain and the pair decide the leg; `intent.leg` names it:
+
+| Leg | Chain | Pair | Priced by | Checks |
+| - | - | - | - | - |
+| `direct` | Base | a pair the oracle registry has a feed for | the launcher's registry | generation, priceable now, salt sorts below pair, address free, `eth_call`, gas |
+| `gated` | Base | **any token with no feed** - an ecosystem token, or any ERC-20 with a real market the creator nominates | a route the RoutedQuoteGate re-verifies hop by hop. Intent adds `route`, `issuerFactory` (zero for a non-ecosystem pair), `startSqrtPriceX96`, `impliedCapUsd`; `gate_admits` fails when the cap is outside the band | as above |
+| `b20` | Base | a B20 wrapped equity (address prefix `0xb2000000`, NVDAc and the rest), **or any oracle-priced pair with `standard: "b20"`** | the B20 launcher (V6B: the token on either side of the pool) | as above. A B20 launch carries no vesting, sniper window, holder rewards, max wallet or basket; asking for any is a `422`, never silently dropped |
+| Robinhood | 4663 | USDG, WETH, any admitted Robinhood stock. `marketCapUsd` \$250 - \$15,000 | `RhPairRegistry` | `pair_admitted`, `checkpoint`, `simulated`, `gas_estimated`, `dev_buy_denominated` |
+
+A pair that is neither registered nor routable is a **422 with `tx.data`
+empty** - nothing to sign. On Robinhood Chain a v4-priced pair needs a
+checkpoint 60-3600s old; if one is missing, the answer carries the
+transaction that posts it.
+
+### Trade
+
+```bash theme={null}
+POST /api/v1/agent/trade/prepare
+{ "chainId": 8453, "token": "0x…", "side": "buy", "amountIn": "100000000000000000000", "slippageBps": 300 }
+```
+
+`amountIn` is raw units of what you *spend*: the pair on a buy, the
+token on a sell.
+
+The quote is at the token's own tax, never a default - an assumed rate
+reverts `TooLittleReceived`, and a token with no rate on record refuses
+to quote. The `eth_call` fill is checked against `minOut`, so a stale
+quote fails the verdict rather than your transaction. On a fresh launch
+nobody has bought yet, buys quote from the entry boundary and a sell is
+refused: the empty side has nothing to sell into.
+
+## The loop
+
+```text theme={null}
+1. sign agent:session:prepare   →  POST /agent/session          →  bearer
+2. POST /agent/launch/prepare   →  422? read verdict.checks, fix, repeat
+3. approvalTx present?          →  sign, send, wait for the receipt
+4. re-prepare                   →  200, verdict.ok
+5. sign tx yourself, send it yourself, before expiresAtBlock
+```
+
+Your key never leaves your process. This API never learns it exists.
+
+Want a person to sign instead? The [MCP agent tier](/integration/mcp#signing-what-an-agent-prepared)
+wraps the same answer with a `basestonk.io/sign#…` link that carries these
+exact bytes; the page decodes them, checks they go to a BaseStonk launcher
+or router, and only then offers the prepared-for wallet a button.
+
+<Note>
+  The CDN bot-scores datacenter traffic and can challenge **at the edge**, before the API sees the request. The tell: a `403` with no JSON `error.code`. Every refusal this API issues is JSON. A carve-out for `/api/v1` is pending.
+</Note>
+
+
+This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

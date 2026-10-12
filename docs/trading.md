@@ -1,0 +1,91 @@
+<!-- Snapshot of https://docs.basestonk.io/trading.md taken 2026-10-10T17:22:37.428Z. Live version: https://docs.basestonk.io/trading -->
+
+# Trading
+
+> Wallet to pool through a router that custodies nothing. What you pay, and the one thing that can refuse a sell.
+
+No deposit, no account. The header's chain switch decides which tokens you
+see and which network the wallet signs on.
+
+## Pay with what you hold
+
+| Chain | Pay in |
+| - | - |
+| Base | ETH, WETH, USDC, or the token's pair |
+| Robinhood Chain | ETH, WETH, or the token's pair |
+| Arc | USDC, or the token's pair |
+
+Paying in the pair is one swap. Paying in anything else, the panel first
+routes your asset into the pair through an aggregator, then completes the
+pool swap: two swaps in one flow. Most stock pairs route from ETH too; the
+exception is the Coinbase B20 stocks on Base with no on-chain market,
+where you must hold the stock already and the panel says so.
+
+Before you press the button, the panel shows **Wallet signatures**: how
+many times your wallet will ask you to sign, counting any token approval
+it needs first. The approval for the pool is given once per token, not
+once per trade.
+
+### Approve and trade in one signature
+
+Some wallets can send an approval and a trade together as one request.
+Smart wallets usually can. The panel uses this when three things are
+true: your wallet says it supports it, the trade needs an approval, and
+the trade goes straight to the pool (you pay in the pair, or you sell the
+token for the pair).
+
+First the panel simulates the approval and the trade together. If that
+passes, your wallet asks once and the panel shows **Approve and trade in
+wallet…**. Beforehand, **Wallet signatures** reads *1 if batch preflight
+passes; otherwise* the usual count.
+
+If the simulation finds the trade would fail, nothing is sent and the
+panel shows the error. If the simulation cannot run at all, the trade
+takes the usual path: approve first, then trade. A routed trade, paying
+in ETH or another asset, always takes the usual path.
+
+## What you pay
+
+The token's tax - buy and sell rates set at launch, shown on its page,
+taken inside the swap from what you receive: in the token when you buy,
+in the pair when you sell. There are no platform charges on top. Price impact
+is the pool's own curve; split a large order rather than raising
+slippage.
+
+## The sell floor
+
+Every pool opens as single-sided liquidity above the launch price. Two
+guarantees follow. **Nobody can pull the liquidity** - the launcher holds
+nothing after launch and no admin exists over the pool. **The launch
+price is a floor** - the pool cannot pay out below the price it opened
+at, because below it there is nothing on the other side.
+
+### The one consequence
+
+While a token trades near its launch price, the pool has not collected
+much of the pair yet. A very large sell can ask for more than the pool
+holds - and is **refused whole** rather than partially filled.
+
+<Note>
+  Not a honeypot, nothing is locked. Selling in smaller pieces always works, and the interface tells you when a sell is too big. A token that has traded up sells normally.
+</Note>
+
+## Charts and data
+
+Live candles, trades, holders and tax mechanics on every token page, from
+BaseStonk's own indexer - the same numbers the [API](/integration/api)
+serves. On Base, a new trade shows in the trade feed and on the chart
+within a couple of seconds of its block.
+
+<AccordionGroup>
+  <Accordion title="Price impact, and why size matters more than slippage">
+    $\Delta_{\text{out}} = \dfrac{y \cdot x}{X + x}$ - your effective price worsens with size *relative to the pool*. A \$500 trade is small in a deep pool and enormous in a thin one. If your size is near what moves the pool 2%, split the order; raising slippage widens what you accept, not what you pay.
+  </Accordion>
+
+  <Accordion title="Why the floor holds">
+    A concentrated position releases $\Delta y = L(\sqrt{P_a} - \sqrt{P_b})$ for a move. That is what *depth* means throughout this venue: not a balance, but what comes out for a given move. It is why routes are ranked by what a move releases, not by pool size.
+  </Accordion>
+</AccordionGroup>
+
+
+This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

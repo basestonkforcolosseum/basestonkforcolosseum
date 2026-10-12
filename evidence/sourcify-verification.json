@@ -1,0 +1,70 @@
+{
+  "capturedAt": "2026-10-10T13:03:14.207Z",
+  "source": "https://sourcify.dev/server/v2/contract/8453/{address}?fields=all (sources omitted here; re-fetch to read code)",
+  "contracts": {
+    "0x80459E17eC8269f058152169e58022a70ed9F1fa": {
+      "name": "AdvancedLauncherV6",
+      "match": "match",
+      "creationMatch": "match",
+      "runtimeMatch": "match",
+      "verifiedAt": "2026-08-30T05:55:33Z",
+      "deployment": {
+        "transactionHash": "0x7a3ef05362f24739d2a3e7a45c34e4cc87dbfe85f17a3b277267b76103a2a375",
+        "blockNumber": "50637286",
+        "transactionIndex": "70",
+        "deployer": "0x9372Dd5b6847B284325Ec5F3d4Ed1445f106ad82"
+      },
+      "compiler": "0.8.28+commit.7893614a",
+      "sourceFiles": 58
+    },
+    "0x029c3CC99eCBA10Fc1616773be37FF86ffe5C395": {
+      "name": "HolderRewardsFactory",
+      "match": "match",
+      "creationMatch": "match",
+      "runtimeMatch": "match",
+      "verifiedAt": "2026-09-04T14:38:33Z",
+      "deployment": {
+        "transactionHash": "0x341fc45d40d97bc35b3dac746832fa5b40b4025f49c544496bd91df745e8216f",
+        "blockNumber": "50637283",
+        "transactionIndex": "80",
+        "deployer": "0x9372Dd5b6847B284325Ec5F3d4Ed1445f106ad82"
+      },
+      "compiler": "0.8.28+commit.7893614a",
+      "sourceFiles": 39
+    },
+    "0xEb743E4D89fBE31F5145EbC189A19E1b71dE4E3b": {
+      "name": "AdvancedLauncherB20V6B",
+      "match": "match",
+      "creationMatch": "match",
+      "runtimeMatch": "match",
+      "verifiedAt": "2026-09-24T01:06:54Z",
+      "deployment": {
+        "transactionHash": "0xdf4a16aeef07c40c5bdb2ff42e56ce3bb0f13fba1dffc315ad3779f930f813bc",
+        "blockNumber": "51697071",
+        "transactionIndex": "71",
+        "deployer": "0x9372Dd5b6847B284325Ec5F3d4Ed1445f106ad82"
+      },
+      "compiler": "0.8.28+commit.7893614a",
+      "sourceFiles": 47
+    },
+    "0x4BC0E8c2caaB145612956652A5668864FfcC7AF7": {
+      "name": "AdvancedLauncherV7",
+      "match": "match",
+      "creationMatch": "match",
+      "runtimeMatch": "match",
+      "verifiedAt": "2026-10-04T03:42:31Z",
+      "deployment": {
+        "transactionHash": "0x65e6ffc62d02ac171a21da2ed3b19fb077bf6c337f78410df2c93c2779f7992c",
+        "blockNumber": "52132561",
+        "transactionIndex": "33",
+        "deployer": "0x9372Dd5b6847B284325Ec5F3d4Ed1445f106ad82"
+      },
+      "compiler": "0.8.28+commit.7893614a",
+      "sourceFiles": 63
+    },
+    "0x08355C1B7Fb50a3568a503C66a615E162190bc42": {
+      "name": "HolderRewardsFactoryV7",
+      "sourcify": "404 / match null - not verified on Sourcify at capture"
+    }
+  }
+}

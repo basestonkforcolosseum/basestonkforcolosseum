@@ -1,0 +1,168 @@
+<!-- Snapshot of https://docs.basestonk.io/launching.md taken 2026-10-10T17:22:37.428Z. Live version: https://docs.basestonk.io/launching -->
+
+# Launching a token
+
+> One transaction: token, pool, opening price, dev buy. Everything the form can set, and what each setting does.
+
+Every launch mints **1,000,000,000 tokens** and opens a Uniswap v4 pool
+with 99% of them. The pair you pick is what the chart is quoted in,
+forever. Same form on Base, Robinhood Chain and Arc - chain is the first
+choice, and the differences are marked below.
+
+## What one signature does
+
+<Steps>
+  <Step title="Creates the token and opens the pool">
+    At the market cap you chose, converted to a pool price from the pair's live on-chain price.
+  </Step>
+
+  <Step title="Runs your dev buy">
+    If you asked for one. Nobody gets in ahead of you.
+  </Step>
+
+  <Step title="Proves the launcher holds nothing">
+    One token left in it and the whole transaction reverts. This is why liquidity can never be pulled.
+  </Step>
+</Steps>
+
+| Pair | Opening cap |
+| - | - |
+| Standard, Base | \$500 - \$10,000 |
+| Gated ecosystem, Base | \$250 - \$15,000 |
+| Any, Robinhood Chain or Arc | \$500 - \$10,000 |
+
+On Robinhood Chain and Arc the form keeps to \$500 - \$10,000. The
+launcher contract on both chains accepts \$250 - \$15,000, and so does the
+[agent API](/integration/agents#launch) on Robinhood Chain.
+
+Some stock pairs refuse very low caps; the form warns and shows the exact
+opening price before you sign.
+
+## The form
+
+[basestonk.io/create](https://basestonk.io/create) has six tabs, in order:
+
+| Tab | What you set |
+| - | - |
+| **Info** | chain, **Launch type** (Simple or Advanced), **Presets** for Advanced, name, ticker, artwork and links |
+| **Pair** | the pair, and the **Starting market cap** |
+| **Dev buy** | your own buy, if you want one |
+| **Protection** | **Anti-sniper toll** and **Max wallet** |
+| **Tax** | the trade tax and where it goes |
+| **Launch** | a review of everything, and the launch button |
+
+On a phone the tabs are a menu that reads *Step N of M*. **Back** and
+**Continue** move between them. A tab that does not apply to your launch
+is left out, and a tab with a problem carries a red dot. Your draft saves
+itself as you go.
+
+Above the launch button, a progress strip follows the launch through
+three stages: **Preparing**, **Sign in wallet** and **Live**. If a stage
+fails, it turns red and the reason is written under it. Not on the list? On Base you can
+[nominate any token with a real market](/stock-pairs#bring-your-own-pair).
+
+## Simple or Advanced
+
+They differ in one thing: who sets the tax and how it is divided.
+
+| | Simple | Advanced |
+| - | - | - |
+| Trade fee | **1%** fixed | your own **buy** and **sell** rates, each 0 - 10% |
+| Your half goes to | your fee address, or part of it to holders | the wedges below, in shares you set |
+| Everything else on the form | ✓ | ✓ |
+
+Simple starts with your whole half going to your fee address. One press
+on **Recommended** sends half of it to holders instead.
+
+## Presets
+
+Advanced starts as **Custom** at 1% buy and 1% sell, with half your share
+going to holders. You set the rates and the split yourself.
+
+To start from a preset instead, choose **Advanced** under **Launch type**
+on the **Info** tab. A **Presets** menu appears on the line below it,
+showing **Custom** until you pick something. Open it and each preset
+lists its buy tax, sell tax and split. Picking one fills in the rates and
+the split. Change either afterwards and the menu reads Custom again.
+
+| Preset | Buy / sell tax | Your share of the fee goes to |
+| - | - | - |
+| **Holder rewards** | 3% / 3% | holders 50%, \$BSTONK basket 20%, your wallet 30% |
+| **Buyback & burn** | 3% / 3% | burn 70%, your wallet 30% |
+| **Deep liquidity** | 3% / 3% | liquidity 70%, your wallet 30% |
+| **Balanced** | 4% / 4% | holders 25%, burn 25%, liquidity 25%, your wallet 25% |
+| **Anti-dump** | 1% / 5% | holders 50%, your wallet 50% |
+
+A preset only appears where the launch can do what it describes:
+
+* Where the \$BSTONK basket is not offered (Robinhood Chain, Arc), **Holder rewards** gives that 20% to holders, so holders get 70%.
+* A B20 launch cannot pay holders, so **Holder rewards**, **Balanced** and **Anti-dump** are not offered for it.
+* **Anti-dump** needs different buy and sell rates, so it is hidden where a launcher cannot set them.
+
+## The wedges
+
+An Advanced launch divides the creator's share among these. Each runs
+inside the swap itself; none can be changed after launch by anyone.
+
+| Wedge | Does | Base | Robinhood | Arc |
+| - | - | :-: | :-: | :-: |
+| **Payees** | up to 8 payouts in all, custom shares (holder rewards and the basket each take one) | ✓ | ✓ | ✓ |
+| **Holder dividends** | every qualifying holder paid their share, automatically, in up to 10 assets the creator picked. [Baskets →](/dividend-baskets) | ✓ | ✓ | ✓ |
+| **Buyback & burn** | burns the token in the same transaction as the trade. A buy's fee arrives as the token and is burnt directly; a sell's fee buys the token back from its own pool and burns it | ✓ | ✓ | ✓ |
+| **Liquidity** | deepens the pool, raising the floor under later sellers | ✓ | ✓ | ✓ |
+| **\$BSTONK basket** | a share into the platform vault | ✓ | - | - |
+
+<Note>
+  On Base, the recommended split (Simple's **Recommended**, and where Advanced starts) sends half of the holders' share through the \$BSTONK basket.
+</Note>
+
+## Protections
+
+| Setting | What it does | Limits |
+| - | - | - |
+| **Max wallet** | buys that would breach the cap revert. Sells are never blocked. Creator and pool exempt. | any % |
+| **Anti-sniper toll** | buys in the opening window pay a rate that decays from up to 99% down to your buy tax. Sells never pay it. The token page shows a live meter. | window up to 30 min |
+| **Dev-buy vesting** | locks your dev buy in a vault with a public schedule. [Vesting →](/vesting) | 7 days minimum, no maximum |
+| **Renounce basket seat** | freezes the payout basket in the launch transaction | Base only - on Robinhood Chain and Arc, hand the seat to a burn address after launch |
+
+## Your own buy
+
+<Warning>
+  **The amount is in the pair token, not dollars.** Priced in AAPLc, `123` means 123 AAPLc. Read the symbol and the *% of supply* badge before signing.
+</Warning>
+
+| | To your wallet | Into a vesting vault |
+| - | - | - |
+| Cap | 10% of supply (**Max** fills to 9.9% - price can move before signing, and over-cap reverts the launch) | none |
+| Trade tax and toll | not paid | not paid |
+| Disclosure | the amount | the amount and the schedule, on-chain at birth |
+
+Short of the pair token? The form swaps into it in the same flow; WETH pairs just wrap your ETH.
+
+## After launch
+
+| Can change | Cannot change |
+| - | - |
+| Fee address (hand it over) | Tax rates and the split |
+| Artwork and description (whoever holds the controller seat) | Supply |
+| Basket composition (its controller, unless renounced) | The pool - no admin exists |
+
+<AccordionGroup>
+  <Accordion title="How the opening price comes from a market cap">
+    With supply $S$ and a pair worth $P_{\text{pair}}$ dollars, cap $M$ gives
+    $p_0 = M / (S \cdot P_{\text{pair}})$, stored by v4 as $\sqrt{p_0} \cdot 2^{96}$.
+    The launcher opens a one-sided position from $p_0$ upward, so the first buyer moves the price first.
+    $P_{\text{pair}}$ is read on-chain at execution - Chainlink, a routed feed, or a gate-verified route. A feed that cannot answer honestly refuses rather than guesses.
+  </Accordion>
+
+  <Accordion title="Why high-priced pairs have a higher minimum">
+    The launcher materialises an integer count of the pair's smallest unit. Against a \$150 stock, a \$10,000 cap opens near \$8,968, and under about \$1,500 rounds to zero and reverts. The form shows the real opening figure.
+  </Accordion>
+
+  <Accordion title="How a burn wedge moves supply">
+    $S_{t+1} = S_t - \dfrac{V \cdot w_{\text{burn}}}{10{,}000 \cdot p_t}$ - the same dollar burns more tokens at a lower price, which is when it matters.
+  </Accordion>
+</AccordionGroup>
+
+
+This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

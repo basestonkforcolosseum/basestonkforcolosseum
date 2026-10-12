@@ -1,0 +1,56 @@
+{
+  "capturedAt": "2026-10-10T11:43:45.817Z",
+  "url": "https://api.basestonk.io/api/launchpad/stats/base",
+  "data": {
+    "tokens": 4026,
+    "trades": 328017,
+    "volumeTotal": 40778090.278674714,
+    "volume24h": 51873.44809857482,
+    "holders": 174453,
+    "platformRevenueUsd": 228870.06872441707,
+    "creatorRevenueUsd": 370221.78929780587,
+    "basketPaid": {
+      "usd": 183324.4470969917,
+      "vaultUsd": 177467.79324193794,
+      "tokenUsd": 5856.653855053766,
+      "approximate": 16,
+      "unpriced": 9
+    },
+    "chain": "base",
+    "venue": {
+      "chains": [
+        "base",
+        "robinhood",
+        "arc"
+      ],
+      "aggregated": [
+        "tokens",
+        "trades",
+        "volumeTotal",
+        "volume24h",
+        "holders",
+        "platformRevenueUsd",
+        "creatorRevenueUsd"
+      ],
+      "tokens": 4144,
+      "trades": 329185,
+      "volumeTotal": 40861384.258056834,
+      "volume24h": 51873.44809857482,
+      "holders": 174893,
+      "platformRevenueUsd": 229319.60128847117,
+      "creatorRevenueUsd": 370717.5034162007,
+      "basketPaid": {
+        "usd": 183324.4470969917,
+        "vaultUsd": 177467.79324193794,
+        "tokenUsd": 5856.653855053766,
+        "approximate": 16,
+        "unpriced": 9,
+        "computedFor": [
+          "base",
+          "robinhood",
+          "arc"
+        ]
+      }
+    }
+  }
+}

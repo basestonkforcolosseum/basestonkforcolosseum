@@ -1,0 +1,71 @@
+<!-- Snapshot of https://docs.basestonk.io/index.md taken 2026-10-10T17:22:37.428Z. Live version: https://docs.basestonk.io/index -->
+
+# What BaseStonk is
+
+> A token launchpad on Base, Robinhood Chain and Arc. Every launch is a live Uniswap v4 pool from its first block.
+
+<img src="https://mintcdn.com/basestonk/tvsSzxoe4VUMW_pS/images/banner-bstonk-coin.webp?fit=max&auto=format&n=tvsSzxoe4VUMW_pS&q=85&s=5c0dbd7df975f791f730026094cac2ec" alt="BaseStonk" style={{ width: '100%', borderRadius: '14px' }} noZoom width="1536" height="614" data-path="images/banner-bstonk-coin.webp" />
+
+One transaction creates a token, opens its Uniswap v4 pool and starts
+trading. No bonding curve. No graduation. No migration.
+
+<CardGroup cols={3}>
+  <Card title="Live from block one" icon="chart-line">
+    Real liquidity, real price, immediately.
+  </Card>
+
+  <Card title="Liquidity cannot be pulled" icon="lock">
+    The launcher must end every launch holding nothing, or the transaction reverts. No admin key over any pool.
+  </Card>
+
+  <Card title="Launch price is a floor" icon="shield">
+    Single-sided liquidity cannot pay out below the opening price.
+  </Card>
+</CardGroup>
+
+## Three chains, one venue
+
+| | Base | Robinhood Chain | Arc |
+| - | - | - | - |
+| Chain id | 8453 | 4663 | 5042 |
+| Pair against | USDC, WETH, cbBTC, tokenized stocks, ecosystem tokens, \$BSTONK - or **any token with a real market** | USDG, WETH, Robinhood stock tokens | USDC, NVDA, CRCL |
+| Platform fee goes to | \$BSTONK buyback and burn | held as USDG | held as USDC |
+
+[Everything that differs →](/chains)
+
+## What holders get
+
+Dividends are a **percentage of trading volume**, paid automatically in
+up to ten assets the creator chose - stocks, ETFs, majors.
+
+<Tip>
+  A token routing 3% to holders on \$200k daily volume pays holders about
+  \$6,000 a day.
+</Tip>
+
+[Dividend baskets →](/dividend-baskets)
+
+## What the platform cannot do
+
+| Power | Exists? |
+| - | :-: |
+| Pause, change fees on, or withdraw liquidity from a live pool | No |
+| Mint tokens | No |
+| Hold user funds | No |
+
+Every contract on Base and Robinhood Chain is source-verified: [contract reference](/integration/contracts). Arc's explorer cannot verify source code yet, so the Arc contracts are not.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Trade or launch in 5 minutes" icon="bolt" href="/quickstart" />
+
+  <Card title="Launch a token" icon="wand-magic-sparkles" href="/launching" />
+
+  <Card title="Fees" icon="coins" href="/fees" />
+
+  <Card title="Build on the API" icon="code" href="/integration/api" />
+</CardGroup>
+
+
+This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

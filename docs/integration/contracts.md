@@ -1,0 +1,205 @@
+<!-- Snapshot of https://docs.basestonk.io/integration/contracts.md taken 2026-10-10T17:22:37.428Z. Live version: https://docs.basestonk.io/integration/contracts -->
+
+# Contract reference
+
+> Every address on Base, Robinhood Chain and Arc.
+
+Every address on every chain. On Base and Robinhood Chain each link opens at
+the verified code; Arc's explorer cannot verify source yet, so Arc links open
+at the address.
+
+| Chain | Id | Explorer | Current launcher |
+| - | - | - | - |
+| Base | 8453 | Basescan | [AdvancedLauncherV7](#base-current-v7) |
+| Robinhood Chain | 4663 | Blockscout | [RhLauncher](#robinhood-chain-4663) |
+| Arc | 5042 | Arcscan | [RhLauncher](#arc-5042) |
+
+## Base - current (V7)
+
+Deployed at blocks 52,132,550 - 52,132,565 (2026-10-03).
+
+| Contract | Address |
+| - | - |
+| AdvancedLauncherV7 | [`0x4BC0E8c2caaB145612956652A5668864FfcC7AF7`](https://basescan.org/address/0x4BC0E8c2caaB145612956652A5668864FfcC7AF7#code) |
+| Fee hook (AdvancedFeeHookV6 source) | [`0x5c999109609f9f857F4D58240CcB12Bf219eE044`](https://basescan.org/address/0x5c999109609f9f857F4D58240CcB12Bf219eE044#code) |
+| HolderRewardsFactoryV7 | [`0x08355C1B7Fb50a3568a503C66a615E162190bc42`](https://basescan.org/address/0x08355C1B7Fb50a3568a503C66a615E162190bc42#code) |
+| LaunchVestingFactory | [`0xAAC771d8Cf973131d93a8fAA163E9210289ABfA2`](https://basescan.org/address/0xAAC771d8Cf973131d93a8fAA163E9210289ABfA2#code) |
+| GatedLaunchLens | [`0x11b4b26F7679D5bbe49681a48Dda2F8CC3E8e7BB`](https://basescan.org/address/0x11b4b26F7679D5bbe49681a48Dda2F8CC3E8e7BB#code) |
+| LaunchControl | [`0x6bD282b6bA9F4fd441bC6585657922A74efa4d55`](https://basescan.org/address/0x6bD282b6bA9F4fd441bC6585657922A74efa4d55#code) |
+| RoutedQuoteGate | [`0x27538A4F1E3f7BF9d6Fa4A56d7156c67Dc843176`](https://basescan.org/address/0x27538A4F1E3f7BF9d6Fa4A56d7156c67Dc843176#code) |
+| CuratedRoutes | [`0x283e15463fF4E6390892402c02cA9ec744be9bf4`](https://basescan.org/address/0x283e15463fF4E6390892402c02cA9ec744be9bf4#code) |
+| BasketVaultV2 | [`0x99FeB612f130c5e981dbC0a96c436bC06ca0fE9E`](https://basescan.org/address/0x99FeB612f130c5e981dbC0a96c436bC06ca0fE9E#code) |
+| SwapRouter | [`0x161026041Cf3701FC8C2f11D1a9121681Be3718f`](https://basescan.org/address/0x161026041Cf3701FC8C2f11D1a9121681Be3718f#code) |
+| PairOracleRegistry | [`0xd5a639149F9E0af9b00E9370110fc8847a71b867`](https://basescan.org/address/0xd5a639149F9E0af9b00E9370110fc8847a71b867#code) |
+
+### The B20 rail
+
+[B20 mode](/stock-pairs) launches through its own launcher and hook. Since block 51,697,071 (2026-09-23) that is **B20 V6B**, which takes any registry-priced pair: the token can sit on either side of the pool, so a B20 against WETH or USDC is `currency1`.
+
+| Contract | Address |
+| - | - |
+| AdvancedLauncherB20V6B | [`0xEb743E4D89fBE31F5145EbC189A19E1b71dE4E3b`](https://basescan.org/address/0xEb743E4D89fBE31F5145EbC189A19E1b71dE4E3b#code) |
+| AdvancedFeeHookV6B (B20) | [`0x3e6B46810b1fd5085086Fd1417E8adB02f34a044`](https://basescan.org/address/0x3e6B46810b1fd5085086Fd1417E8adB02f34a044#code) |
+
+### Linked libraries
+
+Stateless, no constructor arguments; needed to reproduce a launch's bytecode.
+
+| Library | Address |
+| - | - |
+| CrossableDepth | [`0x2c6592e4b9a02f9f597bb0bf477cbb156fac83e7`](https://basescan.org/address/0x2c6592e4b9a02f9f597bb0bf477cbb156fac83e7#code) |
+| ConvertVenues | [`0xaaae76f31a3358320f21736f3b94fb4618cd4f86`](https://basescan.org/address/0xaaae76f31a3358320f21736f3b94fb4618cd4f86#code) |
+| ConvertPricing | [`0x0d4d35f12c39c61308b550360124a4e94598e516`](https://basescan.org/address/0x0d4d35f12c39c61308b550360124a4e94598e516#code) |
+| TokenPath | [`0xe4059c05479956ea0efef1a6651e91edea6be546`](https://basescan.org/address/0xe4059c05479956ea0efef1a6651e91edea6be546#code) |
+| LaunchRewardsV7 | [`0x5312505eaf59a022b5fdde0f3ac238627914a1b7`](https://basescan.org/address/0x5312505eaf59a022b5fdde0f3ac238627914a1b7#code) |
+| LaunchRewards | [`0x113dcdf45dbf3869a47517c1dccdea482098d0de`](https://basescan.org/address/0x113dcdf45dbf3869a47517c1dccdea482098d0de#code) |
+| LaunchOpening | [`0xf23570f7885a3f8dea2efcf14ec0e93cd129715b`](https://basescan.org/address/0xf23570f7885a3f8dea2efcf14ec0e93cd129715b#code) |
+| BasketControl | [`0xb65a995e5d1cd7d0d3412c13c57c77c473cde333`](https://basescan.org/address/0xb65a995e5d1cd7d0d3412c13c57c77c473cde333#code) |
+
+Launcher, hook and factories are bound immutably in both directions, so
+any one address proves the rest. RoutedQuoteGate, CuratedRoutes,
+BasketVaultV2, SwapRouter and PairOracleRegistry carry over from earlier
+generations; V7 has its own LaunchControl.
+
+V7 keeps everything V6 added - split buy/sell tax, [dev-buy vesting](/vesting),
+the anti-sniper toll, the basket controller seat, and
+[takeover through LaunchControl](/vesting#community-takeover) - and changes
+how dividends are earned:
+
+* **A minimum holding.** A wallet earns dividends only while it holds at least
+  `minHolding()` of the token - 1/100,000 of supply, 10,000 tokens on a 1B
+  launch. A mass airdrop of dust neither dilutes holders nor slows the payout
+  queue.
+* **No same-block earnings.** A balance bought in a block earns nothing from
+  fees that arrive in that block, so buy-claim-sell in one transaction pays
+  zero.
+* **A transfer cannot skip the books.** The sender's dividend shares are
+  reduced inside every transfer; a transfer sent with too little gas for that
+  reverts, so nobody can sell while the ledger still credits the old balance.
+* **0% pool fee.** The launch pool charges no LP fee, so the token's tax is the
+  whole cost of a trade.
+
+## Retired generations
+
+Retired launchers keep working on chain; the platform no longer launches
+through them, and launches made through them after retirement are not
+listed.
+
+| Contract | Status | Address |
+| - | - | - |
+| Launcher V6 | retired at block 52,134,295 | [`0x80459E17eC8269f058152169e58022a70ed9F1fa`](https://basescan.org/address/0x80459E17eC8269f058152169e58022a70ed9F1fa#code) |
+| Fee hook V6 | retired at block 52,134,295 | [`0x7C672F3850afadCb8f83478E0A2a90D109fA6044`](https://basescan.org/address/0x7C672F3850afadCb8f83478E0A2a90D109fA6044#code) |
+| Rewards factory V6 | retired with V6 | [`0x029c3CC99eCBA10Fc1616773be37FF86ffe5C395`](https://basescan.org/address/0x029c3CC99eCBA10Fc1616773be37FF86ffe5C395#code) |
+| LaunchControl V6 | still governs V6 launches | [`0x6cC865BB382cEB3D876F99Dfe40C44C1AeE70a6E`](https://basescan.org/address/0x6cC865BB382cEB3D876F99Dfe40C44C1AeE70a6E#code) |
+| Launcher V5 | retired at block 50,637,277 | [`0xAE31b51460dA9C7Cbf906CbaF39Ba55e47c3De42`](https://basescan.org/address/0xAE31b51460dA9C7Cbf906CbaF39Ba55e47c3De42#code) |
+| Fee hook V5 | retired at block 50,637,277 | [`0x201c4916c085032FB49f0B778eFA98DF23672044`](https://basescan.org/address/0x201c4916c085032FB49f0B778eFA98DF23672044#code) |
+| Launcher V4 | retired | [`0x5263E7264c817909893Aa9a00Dc2f4B433040fc1`](https://basescan.org/address/0x5263E7264c817909893Aa9a00Dc2f4B433040fc1#code) |
+| Fee hook V4 | retired | [`0xBefF407B7062E2fE15928960A58AEc93b0c76044`](https://basescan.org/address/0xBefF407B7062E2fE15928960A58AEc93b0c76044#code) |
+| Launcher V3 | retired | [`0xDE15bf7592970e2458239a308CDF727e8780C62A`](https://basescan.org/address/0xDE15bf7592970e2458239a308CDF727e8780C62A#code) |
+| Fee hook V3 | retired | [`0xE6B2B3e59D5df7827EB0A7915675DB66ab12a044`](https://basescan.org/address/0xE6B2B3e59D5df7827EB0A7915675DB66ab12a044#code) |
+| Launcher V2 | retired | [`0x74655F443D25c5d401a582c68dEA02ACd170E12f`](https://basescan.org/address/0x74655F443D25c5d401a582c68dEA02ACd170E12f#code) |
+| Fee hook V1/V2 | retired | [`0x03d2434D5A9AB7FB46bD3c7956A7C62E0Cd46044`](https://basescan.org/address/0x03d2434D5A9AB7FB46bD3c7956A7C62E0Cd46044#code) |
+| Launcher (B20 v6) | retired at block 51,697,076, never launched through | [`0x445F7d3533f956FE25eAF55EbadF3d2aDE153151`](https://basescan.org/address/0x445F7d3533f956FE25eAF55EbadF3d2aDE153151#code) |
+| Fee hook (B20 v6) | retired at block 51,697,076 | [`0xAA4025e5667719dB2ceaA0c1eD8801cE7bdfa044`](https://basescan.org/address/0xAA4025e5667719dB2ceaA0c1eD8801cE7bdfa044#code) |
+| Launcher (B20 v1) | retired at block 50,640,490 | [`0x7DEa3Db7988f0c70E6D51920BAE8cAFBe943e6D5`](https://basescan.org/address/0x7DEa3Db7988f0c70E6D51920BAE8cAFBe943e6D5#code) |
+| Fee hook (B20 v1) | retired at block 50,640,490 | [`0x805975d27518e3E23c4838802d9DdA7302DcA044`](https://basescan.org/address/0x805975d27518e3E23c4838802d9DdA7302DcA044#code) |
+
+<Note>
+  V4 and V5 rows are the last deployment of each; earlier revisions exist. Read a pool's hook rather than assuming - any launcher answers `hook()`.
+</Note>
+
+## Tokens
+
+| Contract | Address |
+| - | - |
+| \$BSTONK | [`0x0F61Edbfe6Cd86024C0f210c0695B08df55fdfc9`](https://basescan.org/address/0x0F61Edbfe6Cd86024C0f210c0695B08df55fdfc9#code) |
+| BSTONK holder rewards | [`0x7f03e814eb1b5dd0c587dc637eea591bce0cd2ce`](https://basescan.org/address/0x7f03e814eb1b5dd0c587dc637eea591bce0cd2ce#code) |
+
+## Infrastructure (not ours)
+
+| Contract | Address |
+| - | - |
+| Uniswap v4 PoolManager | [`0x498581fF718922c3f8e6A244956aF099B2652b2b`](https://basescan.org/address/0x498581fF718922c3f8e6A244956aF099B2652b2b#code) |
+
+## Robinhood Chain (4663)
+
+Deployed 2026-09-04. `RhLauncher` is a different contract from Base's V6, built for the chain's pricing model; the hook is the same `AdvancedFeeHookV6`.
+
+| Contract | Address |
+| - | - |
+| RhLauncher | [`0x302BdDA741dff12c298F68eDc67b4fA830a1f6A4`](https://robinhoodchain.blockscout.com/address/0x302BdDA741dff12c298F68eDc67b4fA830a1f6A4?tab=contract) |
+| AdvancedFeeHookV6 | [`0xF42bC6ca0D082D3Af51771392CeC847a01A6e044`](https://robinhoodchain.blockscout.com/address/0xF42bC6ca0D082D3Af51771392CeC847a01A6e044?tab=contract) |
+| RhPairRegistry | [`0x50264dFd44d6E0272b107F9dfcc226E4A1cc41fF`](https://robinhoodchain.blockscout.com/address/0x50264dFd44d6E0272b107F9dfcc226E4A1cc41fF?tab=contract) |
+| RhHolderRewardsFactory | [`0x5B64396036c94E1Bfb3F4Ed57b2B959d558D997C`](https://robinhoodchain.blockscout.com/address/0x5B64396036c94E1Bfb3F4Ed57b2B959d558D997C?tab=contract) |
+| LaunchVestingFactory | [`0xeFc8176A284e9fa3C0D5103716B5cdBb90497802`](https://robinhoodchain.blockscout.com/address/0xeFc8176A284e9fa3C0D5103716B5cdBb90497802?tab=contract) |
+| LaunchControl | [`0x5F310e9825850A67C3B79b233a9ba4979Ee74C8D`](https://robinhoodchain.blockscout.com/address/0x5F310e9825850A67C3B79b233a9ba4979Ee74C8D?tab=contract) |
+| SwapRouter | [`0x6A10c4117D37FaaDf429c36522A756Ee9435874f`](https://robinhoodchain.blockscout.com/address/0x6A10c4117D37FaaDf429c36522A756Ee9435874f?tab=contract) |
+| RhFeeVault | [`0x618D78262a8dDE229A088C41C0bFf440aC79D267`](https://robinhoodchain.blockscout.com/address/0x618D78262a8dDE229A088C41C0bFf440aC79D267?tab=contract) |
+
+`RhPairRegistry` admits and prices pairs - [the gate](/chains#robinhood-stocks-as-pairs). `RhFeeVault` holds the platform's cut as USDG. No basket vault, gate lens or routed quote gate: what they serve on Base does not exist here.
+
+### Linked libraries
+
+| Library | Address |
+| - | - |
+| LaunchOpening | [`0x9d2A32F2883DA90d4D9e41332d6a633b4aE3a1A7`](https://robinhoodchain.blockscout.com/address/0x9d2A32F2883DA90d4D9e41332d6a633b4aE3a1A7?tab=contract) |
+| RhDepth | [`0xA6090C34c1b2617f03F5b979434221F009339D97`](https://robinhoodchain.blockscout.com/address/0xA6090C34c1b2617f03F5b979434221F009339D97?tab=contract) |
+
+### Pair tokens and infrastructure (not ours)
+
+| Contract | Address |
+| - | - |
+| USDG | `0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168` |
+| WETH | `0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73` |
+| Uniswap v4 PoolManager | `0x8366a39CC670B4001A1121B8F6A443A643e40951` |
+| Uniswap v3 factory | `0x1f7d7550B1b028f7571E69A784071F0205FD2EfA` |
+
+The 194 stock tokens are proxies sharing one implementation, admitted by code hash - ask `RhPairRegistry.isAdmitted(address)`. Launched tokens (`AdvancedLaunchToken`) and distributors (`RhHolderRewards`) are verified once; Blockscout matches later instances by bytecode.
+
+## Arc (5042)
+
+Deployed 2026-09-16. The same `RhLauncher` and `AdvancedFeeHookV6` code as
+Robinhood Chain, with Arc's own pair registry and fee vault. Gas and the
+fee are both USDC.
+
+| Contract | Address |
+| - | - |
+| RhLauncher | [`0xCa00D03E5A5Bd2F4B9E161A1611d8fA46A672Fe0`](https://arc-scan.org/address/0xCa00D03E5A5Bd2F4B9E161A1611d8fA46A672Fe0) |
+| AdvancedFeeHookV6 | [`0xe8F9eaE16a6AB395191b1b409ab7ab5b5dc36044`](https://arc-scan.org/address/0xe8F9eaE16a6AB395191b1b409ab7ab5b5dc36044) |
+| ArcPairRegistry | [`0x828013971942776B2A801c6a2f83E8eeF1292289`](https://arc-scan.org/address/0x828013971942776B2A801c6a2f83E8eeF1292289) |
+| RhHolderRewardsFactory | [`0x6f8bF3FD64Dc86d8C4B41fe7743Cc6D0278b3342`](https://arc-scan.org/address/0x6f8bF3FD64Dc86d8C4B41fe7743Cc6D0278b3342) |
+| LaunchVestingFactory | [`0x4d749776fB81036c05e13A553476E36438fc854b`](https://arc-scan.org/address/0x4d749776fB81036c05e13A553476E36438fc854b) |
+| LaunchControl | [`0xa7A9a16928C7234D02CdAdD6587Fef9E8679D52D`](https://arc-scan.org/address/0xa7A9a16928C7234D02CdAdD6587Fef9E8679D52D) |
+| SwapRouter | [`0x3f7656D75063224aDAf7FA56eD09985e7BEC19B1`](https://arc-scan.org/address/0x3f7656D75063224aDAf7FA56eD09985e7BEC19B1) |
+| ArcFeeVault | [`0x180767E20B252167637148d35568C0ECc1A1C14a`](https://arc-scan.org/address/0x180767E20B252167637148d35568C0ECc1A1C14a) |
+
+`ArcPairRegistry` admits and prices pairs - USDC through its Chainlink feed,
+the rest from their own markets. `ArcFeeVault` holds the platform's cut as
+USDC. The swap router is the one [`prepare_trade`](/integration/mcp#the-agent-tier)
+and `/api/v1/agent/trade/prepare` address on Arc.
+
+### Linked libraries
+
+The same CREATE2 addresses as on Robinhood Chain.
+
+| Library | Address |
+| - | - |
+| LaunchOpening | [`0x9d2a32f2883Da90D4D9e41332D6A633B4Ae3a1A7`](https://arc-scan.org/address/0x9d2a32f2883Da90D4D9e41332D6A633B4Ae3a1A7) |
+| RhDepth | [`0xA6090c34C1b2617f03f5B979434221F009339d97`](https://arc-scan.org/address/0xA6090c34C1b2617f03f5B979434221F009339d97) |
+
+### Pair tokens and infrastructure (not ours)
+
+| Contract | Address |
+| - | - |
+| USDC | `0x3600000000000000000000000000000000000000` |
+| NVDA | `0x6505506540dc99f7366316b10e9cf1a584cbd42a` |
+| CRCL | `0x2ba0f44bdfc17fba30eda9cdbecb908ca45b043b` |
+| Uniswap v4 PoolManager | `0x8366a39CC670B4001A1121B8F6A443A643e40951` |
+| Uniswap v3 factory | `0xf0db7b58379503491d857dB50AC9ece64c653918` |
+
+## Pool parameters
+
+Fee `3000`, tick spacing `60`, that chain's launcher hook. PoolKey, tuples and events: [on-chain](/integration/onchain).
+
+
+This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

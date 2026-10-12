@@ -1,0 +1,62 @@
+<!-- Snapshot of https://docs.basestonk.io/bstonk.md taken 2026-10-10T17:22:37.428Z. Live version: https://docs.basestonk.io/bstonk -->
+
+# $BSTONK
+
+> The platform token. Two buyback engines and two dividend streams, both fed by the whole venue.
+
+BaseStonk's own token, launched through the same machinery as everything
+else. **Base only** - no \$BSTONK exists on Robinhood Chain, and there is
+no bridge. [Why →](/chains#where-the-platforms-cut-goes)
+
+[`0x0F61Edbfe6Cd86024C0f210c0695B08df55fdfc9`](https://basescan.org/address/0x0F61Edbfe6Cd86024C0f210c0695B08df55fdfc9#code)
+
+## Two buybacks
+
+| | Its own tax | The whole platform |
+| - | - | - |
+| Source | 0.25% of every \$BSTONK trade | the platform's cut of **every launch on Base** |
+| Mechanism | bought and burnt inside the swap, by the hook | swept, converted to \$BSTONK, burnt - on a schedule, nobody pressing anything |
+| Scales with | \$BSTONK's own volume | every token that ever launches |
+
+The second is the one no other launchpad has: **platform revenue is a
+standing bid on its own token, and everything it buys is destroyed.** A
+launch with nothing to do with \$BSTONK still burns \$BSTONK by trading.
+
+<Note>
+  **Over 10% of supply is already burnt.** The live figure is on the \$BSTONK token page under *Platform flywheel*. No mint function, no owner: the number only moves down.
+</Note>
+
+## Two dividend streams
+
+| | USDC | The platform basket |
+| - | - | - |
+| Source | 0.25% of every \$BSTONK trade | a share of participating launches' rewards, venue-wide |
+| Paid as | USDC, by the contract | the assets themselves - dozens of slots, growing wider as launches join and deeper as they trade |
+
+Every other basket is fed by one token's volume. This one is fed by all
+of them.
+
+## As a pair
+
+\$BSTONK is a registered launch pair: tokens can be priced in it, pay fees
+in it, and pay dividends in it - or in any other admitted asset through
+the same conversion engine.
+
+<AccordionGroup>
+  <Accordion title="The two burn rates">
+    $\text{burn}_{\text{self}} = V_{\text{BSTONK}} \cdot w_{\text{burn}} / p$ with $w_{\text{burn}} = 25$ bps.
+    $\text{burn}_{\text{platform}} = \frac{1}{p}\sum_i V_i \cdot \min(\tau_i/2, 100\text{ bps})$ over every launch $i$.
+    Additive and independent. The second has no ceiling that depends on \$BSTONK. The $1/p$ in both: the same dollar burns more tokens at a lower price.
+  </Accordion>
+
+  <Accordion title="Why a venue-wide basket is a different asset">
+    One launch's flow is one random variable. The basket's is a sum over many - $\sum_i V_i \cdot r_i \cdot \nu_i / 10{,}000$ - so idiosyncratic failures wash out. Adding a launch adds a term; it never removes one.
+  </Accordion>
+
+  <Accordion title="How a vault round is allocated">
+    $\text{payout}_h = A \cdot w_h / \sum_j w_j$ where $w_h$ is balance **integrated over time**, not a snapshot - a snapshot is trivially sniped. Rounds pay in rolling tranches, so the vault always carries a balance and no round is worth timing.
+  </Accordion>
+</AccordionGroup>
+
+
+This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

@@ -1,0 +1,16 @@
+{
+  "name": "basestonk-worlds-fair",
+  "private": true,
+  "description": "BaseStonk public integration examples, specs and evidence for Crypto World's Fair 2026",
+  "type": "module",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "stats": "node examples/01-platform-stats.mjs",
+    "mcp": "node examples/02-mcp-agent-handoff.mjs",
+    "event": "node examples/03-event-period-launches.mjs",
+    "verify": "node examples/04-verify-deployments.mjs",
+    "receipt": "node examples/05-v7-launch-receipt.mjs",
+    "snapshot": "node scripts/snapshot-public-sources.mjs"
+  },
+  "license": "SEE LICENSE IN LICENSE"
+}

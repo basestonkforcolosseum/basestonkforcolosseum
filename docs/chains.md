@@ -1,0 +1,94 @@
+<!-- Snapshot of https://docs.basestonk.io/chains.md taken 2026-10-10T17:22:37.428Z. Live version: https://docs.basestonk.io/chains -->
+
+# Chains
+
+> Base, Robinhood Chain and Arc: what is the same, what is different, and why.
+
+One venue, three chains. Same fee hook, same launcher rules, same holder
+dividends. Switch in the header; the list, the form and your portfolio
+follow.
+
+## Side by side
+
+| | Base | Robinhood Chain | Arc |
+| - | - | - | - |
+| Chain id | 8453 | 4663 | 5042 |
+| Gas | ETH | ETH | USDC |
+| Explorer | Basescan | Blockscout | Arcscan |
+| Pairs | USDC, USDT, WETH, cbBTC, VIRTUAL, AERO, tokenized stocks, ecosystem tokens, \$BSTONK - **or any ERC-20 with a real market** | **USDG**, WETH, **Robinhood stock tokens** | **USDC**, NVDA, CRCL |
+| Opening cap | \$500 - \$10,000 (gated: \$250 - \$15,000) | \$500 - \$10,000 on the form; \$250 - \$15,000 at the launcher | \$500 - \$10,000 on the form; \$250 - \$15,000 at the launcher |
+| Split buy / sell tax, vesting, anti-sniper toll | ✓ | ✓ | ✓ |
+| Holder dividends | ✓ | ✓ | ✓ |
+| Community takeover | ✓ | ✓ | ✓ |
+| \$BSTONK basket wedge | ✓ | - | - |
+| Renounce basket seat at launch | ✓ | - | - |
+| B20 mode | ✓ | - | - |
+| Referrals | ✓ | - | - |
+| Platform fee goes to | \$BSTONK buyback and burn | held as USDG | held as USDC |
+
+## Where the platform's cut goes
+
+<Tabs>
+  <Tab title="Base">
+    Converted to \$BSTONK and burnt, inside the trade. Every launch on Base burns \$BSTONK just by trading. [The flywheel →](/bstonk)
+  </Tab>
+
+  <Tab title="Robinhood Chain">
+    Converted to USDG and **held in the fee vault on 4663**. Nothing bridges automatically. \$BSTONK does not exist on this chain and there is no version of it here.
+
+    This is a decision, not a gap: \$BSTONK stays a Base token, and moving value between chains is a manual act, never a pipe.
+  </Tab>
+
+  <Tab title="Arc">
+    Converted to USDC and **held in the fee vault on Arc**. As on Robinhood Chain, \$BSTONK stays a Base token.
+  </Tab>
+</Tabs>
+
+## Robinhood stocks as pairs
+
+Robinhood issues tokenized equities and ETFs on its chain. Any of them is
+launchable against, subject to one gate.
+
+| Rule | |
+| - | - |
+| Admission | A genuine Robinhood stock token with supply, or USDG or WETH. No allowlist. |
+| Gate | Pushing the pair's price down 10x through its deepest market must cost at least **\$1,000** |
+| Pricing | Chainlink where a feed exists; the pair's own market otherwise. Read when you sign, never typed. |
+| Passing today | The form only offers pairs that pass. |
+
+<Note>
+  The gate tests whether a market is real, not whether a price is precise. It exists to stop a launch opening at a market cap that was never there.
+</Note>
+
+## Arc pairs
+
+Arc has three: **USDC**, which is also its gas, and **NVDA** and **CRCL**.
+The two stocks on Arc are bridged claims on Robinhood's stock tokens, held
+by a third party. They are **not shares**, and the pair card says so. USDC
+is priced by Chainlink; NVDA and CRCL have no feed on Arc, so each is
+priced from its own market.
+
+## Dividends on Robinhood Chain and Arc
+
+Paid in the pair - a USDG-paired token pays USDG, an NVDA-paired token
+pays NVDA. A [basket](/dividend-baskets) routes them into other admitted
+assets on the same chain, as on Base.
+
+## For builders
+
+The [REST API](/integration/api) takes `chain=robinhood` and `chain=arc`
+wherever it takes `chain=base`, and the [agent API](/integration/agents)
+takes `chainId: 4663` in the body for launches and trades, and
+`chainId: 5042` for trades (an Arc launch is prepared on the create page,
+not by the agent API). Robinhood Chain addresses are on the
+[contract reference](/integration/contracts#robinhood-chain-4663). The
+launch tuple has no `vaultShareBps`, `issuers` or `renounceBasket` -
+[on-chain](/integration/onchain#robinhood-chain). Arc uses the same
+launcher and the same tuple as Robinhood Chain.
+
+<Warning>
+  Robinhood Chain makes a block every **0.1s** - 864,000 a day. Filter `eth_getLogs` by address or topic; every public endpoint refuses a wide unfiltered range.
+</Warning>
+
+
+This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

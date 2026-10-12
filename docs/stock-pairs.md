@@ -1,0 +1,112 @@
+<!-- Snapshot of https://docs.basestonk.io/stock-pairs.md taken 2026-10-10T17:22:37.428Z. Live version: https://docs.basestonk.io/stock-pairs -->
+
+# Pairs
+
+> What a launch can be priced in: curated stocks and majors, or any token with a real market that you nominate yourself.
+
+A launch is quoted in its pair forever. The opening price is read
+on-chain when you sign - never typed, never trusted. Pairs come three
+ways:
+
+| | Who picks it | Priced by |
+| - | - | - |
+| **Curated** | BaseStonk - stables, majors, tokenized stocks | a Chainlink or routed feed |
+| **Ecosystem** (Base) | any admitted Clanker, Virtuals or Bankr token | a route the gate verifies |
+| **Creator-chosen** (Base) | **you - any token from an admitted issuer, with a real market** | a route the gate verifies |
+
+## Bring your own pair
+
+On Base, you are not limited to the list. Paste a token's address into
+the pair picker and, if its issuer is admitted and it has a real market,
+you can launch against it.
+The token card then carries a **Creator-chosen pair** badge, and the
+interface says so plainly: *nominated by the creator, priced through a
+route the gate verified on chain, not a pair we added ourselves.*
+
+| The gate requires | |
+| - | - |
+| An admitted issuer | the token was launched through **Clanker, Virtuals or Bankr**, or is on the curated list. The gate admits tokens by the bytecode their issuer deploys, so it can price against a token nobody at BaseStonk has looked at without pricing against one nobody can vouch for. Any other token is refused with *not vetted*, whatever its market - ask on [X](https://x.com/BaseStonk) to have an issuer reviewed. |
+| A route to USDC | one to eight hops through **Uniswap v2, v3 or v4** pools, ending in USDC (or WETH, which the gate prices to USDC itself) |
+| Not Aerodrome | Aerodrome and Slipstream pools cannot be represented by the gate. A token whose only market is Aerodrome is refused. |
+| Depth | the interface requires **\$2,500** of market depth before it offers the pair |
+| A settled price | a 60-second TWAP; the gate refuses a pool that moved inside it |
+| Honesty | every hop is re-verified on chain when you sign - not once, at listing |
+
+<Note>
+  This is how a creator launched **\$EVAL** paired with **\$REPPO** - a token BaseStonk never curated, priced through one Uniswap v3 hop the gate accepted. \$REPPO is a Clanker token, which is why the gate admitted it; anyone can do the same with any admitted-issuer token that has a market.
+</Note>
+
+What the gate does *not* do: vouch for the token. A creator-chosen pair
+is the creator's judgment about what their token should track; the gate
+only guarantees the price it opens at was real. The badge exists so a
+buyer knows which kind they are looking at.
+
+## Three kinds of stock token
+
+<Tabs>
+  <Tab title="Robinhood stocks">
+    **Robinhood Chain.** 194 equities and ETFs issued by Robinhood - NVDA, AAPL, TSLA, SPY and the rest. Admitted by what they are, not by a list; priced by Chainlink where a feed exists and by the token's own market otherwise, behind a depth gate. [Chains →](/chains#robinhood-stocks-as-pairs)
+  </Tab>
+
+  <Tab title="ST0x wrapped">
+    **Base.** Eleven 1:1 backed equities and ETFs **with real DEX liquidity** - anyone can buy a token paired with these using plain ETH.
+
+    | Priced by | Tickers |
+    | - | - |
+    | Chainlink | wtCOIN, wtNVDA, wtMSTR, wtSPCX |
+    | Routed feed | wtSGOV, wtSKHY, wtSPYM, wtDRAM, wtQQQM, wtIAU, wtCEG |
+  </Tab>
+
+  <Tab title="Coinbase B20">
+    **Base.** NVDAc, COINc and friends, issued in the Coinbase app. Four trade in live pools against USDC - **NVDAc, GOOGLc, AAPLc, METAc**. The other nine have no on-chain market yet: buyers must already hold the stock, and ETH cannot route into them.
+  </Tab>
+</Tabs>
+
+The form tells you which kind you are choosing.
+
+## How a pair is priced
+
+| Source | Used when | Refuses when |
+| - | - | - |
+| **Chainlink feed** | one exists for the equity | stale beyond **96 hours** (equity markets close at weekends; 24h would fail every Saturday) |
+| **Routed feed** | no Chainlink feed (Base ETFs, foreign listings) | any hop of its fixed route is too thin - `HopTooThin` |
+| **Market depth** | Robinhood stocks without a feed | inflating the cap 10x would cost under \$1,000 |
+
+A feed that refuses stops the launch. That is the design: a launch priced
+off a pool a \$500 trade could move opens at a market cap that was never
+real.
+
+## When a pair goes quiet
+
+The pair shows a **Too thin** badge and the launch button is blocked,
+with the reason stated. Nothing is stuck: tokens already launched against
+the pair are unaffected, because the feed only prices the *opening* of a
+new pool. The pair reopens by itself the moment its market deepens - no
+action from anyone. A pair that has thinned for good is re-curated onto a
+deeper venue, never given a lower floor.
+
+## Stocks as dividends
+
+Equities can also be **dividend assets**: a launch pays its holders in
+tokenized stock through its [basket](/dividend-baskets).
+
+<Note>
+  \$BSTONK as a pair is priced from its own pool times the USDC feed - a spot price a determined trader can move within a transaction. That can misprice the *opening* of a new launch, never a pool that exists.
+</Note>
+
+<Accordion title="B20 mode (Base only)">
+  On Base the form offers to launch your token **as a B20** through Base's factory precompile - against **any oracle-priced pair**: WETH, USDC, cbBTC, the stocks, \$BSTONK. Until 2026-09-23 this was offered only against a Coinbase B20 stock. Your token gets a `0xB2000000…` address like the Coinbase stocks, a fixed 1B supply, and **both the mint role and the last admin renounced inside the launch transaction**. Nobody can mint, pause or freeze it - verify the renounce on Basescan.
+
+  It is not offered where the pair has no oracle feed - an ecosystem or nominated token priced by a route, or one of the directly priced wrapped listings (wtTSM, wtAMD and the rest): the B20 launcher opens from the oracle price only. The form shows the B20 option only where it can launch.
+
+  | B20 launches keep | B20 launches lose |
+  | - | - |
+  | Trade tax and fee splits | Max wallet |
+  | Buyback & burn | Holder dividends |
+  | The unpullable pool | |
+
+  The standard has no holding caps and calls no external trackers. The form states both halves before you sign.
+</Accordion>
+
+
+This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

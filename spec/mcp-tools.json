@@ -1,0 +1,4067 @@
+{
+  "tools": [
+    {
+      "name": "find_tokens",
+      "title": "Find tokens",
+      "description": "List BaseStonk launches: what is trending (the default), the newest (sort \"age\"), the largest, the most traded or the most held - optionally narrowed by a name, ticker or address fragment. Each row has price, fully-diluted market cap, 24h change, volume, holders, pair, age and a link. To look at ONE token in detail use get_token.",
+      "inputSchema": {
+        "type": "object",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "properties": {
+          "query": {
+            "description": "Name, ticker or address fragment. Omit to list everything.",
+            "type": "string",
+            "minLength": 1
+          },
+          "sort": {
+            "default": "trending",
+            "description": "\"trending\" (default), \"age\" for newest first, \"marketcap\", \"volume\" (24h) or \"holders\".",
+            "type": "string",
+            "enum": [
+              "trending",
+              "age",
+              "marketcap",
+              "volume",
+              "holders"
+            ]
+          },
+          "chain": {
+            "default": "base",
+            "description": "Which chain: \"base\" (default), \"robinhood\" (Robinhood Chain) or \"arc\" (Arc).",
+            "type": "string",
+            "enum": [
+              "base",
+              "robinhood",
+              "arc"
+            ]
+          },
+          "limit": {
+            "default": 10,
+            "description": "How many rows (default 10, max 50).",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50
+          }
+        }
+      },
+      "annotations": {
+        "title": "Find tokens",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "outputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "chain": {
+            "type": "string",
+            "enum": [
+              "base",
+              "robinhood",
+              "arc"
+            ]
+          },
+          "total": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "How many tokens match, of which `tokens` is the first page."
+          },
+          "tokens": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "chain": {
+                  "type": "string",
+                  "enum": [
+                    "base",
+                    "robinhood",
+                    "arc"
+                  ]
+                },
+                "address": {
+                  "type": "string"
+                },
+                "symbol": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string"
+                },
+                "priceUsd": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "US dollars. null means not known - never read it as zero."
+                },
+                "marketCapUsd": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "US dollars. null means not known - never read it as zero."
+                },
+                "marketCapKind": {
+                  "type": "string",
+                  "const": "fully_diluted"
+                },
+                "change24hPct": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "volume24hUsd": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "US dollars. null means not known - never read it as zero."
+                },
+                "holders": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "pairSymbol": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "createdAt": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "official": {
+                  "type": "boolean"
+                },
+                "impersonating": {
+                  "type": "boolean",
+                  "description": "Flagged as copying another token. Say so whenever this token is mentioned."
+                }
+              },
+              "required": [
+                "chain",
+                "address",
+                "symbol",
+                "name",
+                "url",
+                "priceUsd",
+                "marketCapUsd",
+                "marketCapKind",
+                "change24hPct",
+                "volume24hUsd",
+                "holders",
+                "pairSymbol",
+                "createdAt",
+                "official",
+                "impersonating"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "chain",
+          "total",
+          "tokens"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_token",
+      "title": "Token details",
+      "description": "Everything about one BaseStonk token: price, fully-diluted market cap, 24h change and volume, liquidity, holders, tax and dividend settings, pair, creator, launch time, links and a 24h sparkline.",
+      "inputSchema": {
+        "type": "object",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "properties": {
+          "token": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Token address (0x…) or ticker symbol, e.g. \"BSTONK\" or \"$GROK\". An address is exact; a ticker several launches share is answered with the candidates to choose from."
+          },
+          "chain": {
+            "default": "base",
+            "description": "Which chain: \"base\" (default), \"robinhood\" (Robinhood Chain) or \"arc\" (Arc).",
+            "type": "string",
+            "enum": [
+              "base",
+              "robinhood",
+              "arc"
+            ]
+          }
+        },
+        "required": [
+          "token"
+        ]
+      },
+      "annotations": {
+        "title": "Token details",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "_meta": {
+        "ui": {
+          "resourceUri": "ui://basestonk/app.html"
+        },
+        "ui/resourceUri": "ui://basestonk/app.html"
+      },
+      "outputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "object",
+            "properties": {
+              "chain": {
+                "type": "string",
+                "enum": [
+                  "base",
+                  "robinhood",
+                  "arc"
+                ]
+              },
+              "address": {
+                "type": "string"
+              },
+              "symbol": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string"
+              },
+              "resolvedBy": {
+                "type": "string",
+                "enum": [
+                  "address",
+                  "ticker",
+                  "name",
+                  "only_match"
+                ],
+                "description": "How the reference given to the tool was matched to this token."
+              },
+              "note": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Set when the match needs saying - other tokens share the ticker, or it was not an exact match."
+              },
+              "impersonating": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "chain",
+              "address",
+              "symbol",
+              "name",
+              "url",
+              "resolvedBy",
+              "note",
+              "impersonating"
+            ],
+            "additionalProperties": false
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "priceUsd": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "US dollars. null means not known - never read it as zero."
+          },
+          "marketCapUsd": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "US dollars. null means not known - never read it as zero."
+          },
+          "marketCapKind": {
+            "type": "string",
+            "const": "fully_diluted"
+          },
+          "change24hPct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "volume24hUsd": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "US dollars. null means not known - never read it as zero."
+          },
+          "liquidityUsd": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "US dollars. null means not known - never read it as zero."
+          },
+          "holders": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "official": {
+            "type": "boolean"
+          },
+          "fees": {
+            "type": "object",
+            "properties": {
+              "buyTaxBps": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "sellTaxBps": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "burnBpsOfCreatorShare": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Basis points of the CREATOR'S share of the tax, not of the trade."
+              },
+              "liquidityBpsOfCreatorShare": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Basis points of the CREATOR'S share of the tax, not of the trade."
+              },
+              "rewardsBpsOfRemainder": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Basis points of what remains after burn and liquidity, paid to holders as dividends."
+              },
+              "minHoldingTokens": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "V7 launches: whole tokens a wallet must hold to earn dividends; null where there is no minimum."
+              }
+            },
+            "required": [
+              "buyTaxBps",
+              "sellTaxBps",
+              "burnBpsOfCreatorShare",
+              "liquidityBpsOfCreatorShare",
+              "rewardsBpsOfRemainder",
+              "minHoldingTokens"
+            ],
+            "additionalProperties": false
+          },
+          "pair": {
+            "type": "object",
+            "properties": {
+              "address": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "symbol": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "address",
+              "symbol"
+            ],
+            "additionalProperties": false
+          },
+          "generation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "creator": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "notice": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "links": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "sparkline24h": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        },
+        "required": [
+          "token",
+          "description",
+          "priceUsd",
+          "marketCapUsd",
+          "marketCapKind",
+          "change24hPct",
+          "volume24hUsd",
+          "liquidityUsd",
+          "holders",
+          "official",
+          "fees",
+          "pair",
+          "generation",
+          "creator",
+          "createdAt",
+          "notice",
+          "links",
+          "sparkline24h"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_candles",
+      "title": "Price chart",
+      "description": "Price history for one token as OHLC candles plus a text sparkline. Intervals: 1m, 5m, 15m, 1h.",
+      "inputSchema": {
+        "type": "object",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "properties": {
+          "token": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Token address (0x…) or ticker symbol, e.g. \"BSTONK\" or \"$GROK\". An address is exact; a ticker several launches share is answered with the candidates to choose from."
+          },
+          "chain": {
+            "default": "base",
+            "description": "Which chain: \"base\" (default), \"robinhood\" (Robinhood Chain) or \"arc\" (Arc).",
+            "type": "string",
+            "enum": [
+              "base",
+              "robinhood",
+              "arc"
+            ]
+          },
+          "interval": {
+            "default": "1h",
+            "description": "Candle width.",
+            "type": "string",
+            "enum": [
+              "1m",
+              "5m",
+              "15m",
+              "1h"
+            ]
+          },
+          "limit": {
+            "default": 24,
+            "description": "How many rows (default 24, max 200).",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 200
+          }
+        },
+        "required": [
+          "token"
+        ]
+      },
+      "annotations": {
+        "title": "Price chart",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "outputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "object",
+            "properties": {
+              "chain": {
+                "type": "string",
+                "enum": [
+                  "base",
+                  "robinhood",
+                  "arc"
+                ]
+              },
+              "address": {
+                "type": "string"
+              },
+              "symbol": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string"
+              },
+              "resolvedBy": {
+                "type": "string",
+                "enum": [
+                  "address",
+                  "ticker",
+                  "name",
+                  "only_match"
+                ],
+                "description": "How the reference given to the tool was matched to this token."
+              },
+              "note": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Set when the match needs saying - other tokens share the ticker, or it was not an exact match."
+              },
+              "impersonating": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "chain",
+              "address",
+              "symbol",
+              "name",
+              "url",
+              "resolvedBy",
+              "note",
+              "impersonating"
+            ],
+            "additionalProperties": false
+          },
+          "interval": {
+            "type": "string"
+          },
+          "candles": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "t": {
+                  "type": "number"
+                },
+                "o": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "h": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "l": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "c": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "v": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "t",
+                "o",
+                "h",
+                "l",
+                "c",
+                "v"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "open": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "US dollars. null means not known - never read it as zero."
+                  },
+                  "close": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "US dollars. null means not known - never read it as zero."
+                  },
+                  "changePct": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "high": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "US dollars. null means not known - never read it as zero."
+                  },
+                  "low": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "US dollars. null means not known - never read it as zero."
+                  },
+                  "volumeUsd": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "US dollars. null means not known - never read it as zero."
+                  }
+                },
+                "required": [
+                  "open",
+                  "close",
+                  "changePct",
+                  "high",
+                  "low",
+                  "volumeUsd"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "token",
+          "interval",
+          "candles",
+          "summary"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_trades",
+      "title": "Recent trades",
+      "description": "The latest buys and sells on one token, newest first, with size in USD and the trader wallet.",
+      "inputSchema": {
+        "type": "object",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "properties": {
+          "token": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Token address (0x…) or ticker symbol, e.g. \"BSTONK\" or \"$GROK\". An address is exact; a ticker several launches share is answered with the candidates to choose from."
+          },
+          "chain": {
+            "default": "base",
+            "description": "Which chain: \"base\" (default), \"robinhood\" (Robinhood Chain) or \"arc\" (Arc).",
+            "type": "string",
+            "enum": [
+              "base",
+              "robinhood",
+              "arc"
+            ]
+          },
+          "limit": {
+            "default": 15,
+            "description": "How many rows (default 15, max 100).",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          }
+        },
+        "required": [
+          "token"
+        ]
+      },
+      "annotations": {
+        "title": "Recent trades",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "outputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "object",
+            "properties": {
+              "chain": {
+                "type": "string",
+                "enum": [
+                  "base",
+                  "robinhood",
+                  "arc"
+                ]
+              },
+              "address": {
+                "type": "string"
+              },
+              "symbol": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string"
+              },
+              "resolvedBy": {
+                "type": "string",
+                "enum": [
+                  "address",
+                  "ticker",
+                  "name",
+                  "only_match"
+                ],
+                "description": "How the reference given to the tool was matched to this token."
+              },
+              "note": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Set when the match needs saying - other tokens share the ticker, or it was not an exact match."
+              },
+              "impersonating": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "chain",
+              "address",
+              "symbol",
+              "name",
+              "url",
+              "resolvedBy",
+              "note",
+              "impersonating"
+            ],
+            "additionalProperties": false
+          },
+          "total": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "trades": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "side": {
+                  "type": "string",
+                  "enum": [
+                    "buy",
+                    "sell"
+                  ]
+                },
+                "volumeUsd": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "US dollars. null means not known - never read it as zero."
+                },
+                "priceUsd": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "US dollars. null means not known - never read it as zero."
+                },
+                "amount": {
+                  "type": "object",
+                  "properties": {
+                    "raw": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "The integer amount as the chain stores it."
+                    },
+                    "decimals": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "whole": {
+                      "anyOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "raw / 10^decimals, as a float for display. Use raw for arithmetic."
+                    },
+                    "symbol": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "raw",
+                    "decimals",
+                    "whole",
+                    "symbol"
+                  ],
+                  "additionalProperties": false
+                },
+                "trader": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "at": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "txHash": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "side",
+                "volumeUsd",
+                "priceUsd",
+                "amount",
+                "trader",
+                "at",
+                "txHash"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "token",
+          "total",
+          "trades"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_holders",
+      "title": "Top holders",
+      "description": "The largest holders of one token and their share of supply. The 0x…dEaD address is burnt supply; the pool manager address is the liquidity pool.",
+      "inputSchema": {
+        "type": "object",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "properties": {
+          "token": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Token address (0x…) or ticker symbol, e.g. \"BSTONK\" or \"$GROK\". An address is exact; a ticker several launches share is answered with the candidates to choose from."
+          },
+          "chain": {
+            "default": "base",
+            "description": "Which chain: \"base\" (default), \"robinhood\" (Robinhood Chain) or \"arc\" (Arc).",
+            "type": "string",
+            "enum": [
+              "base",
+              "robinhood",
+              "arc"
+            ]
+          },
+          "limit": {
+            "default": 10,
+            "description": "How many rows (default 10, max 50).",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50
+          }
+        },
+        "required": [
+          "token"
+        ]
+      },
+      "annotations": {
+        "title": "Top holders",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "outputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "object",
+            "properties": {
+              "chain": {
+                "type": "string",
+                "enum": [
+                  "base",
+                  "robinhood",
+                  "arc"
+                ]
+              },
+              "address": {
+                "type": "string"
+              },
+              "symbol": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string"
+              },
+              "resolvedBy": {
+                "type": "string",
+                "enum": [
+                  "address",
+                  "ticker",
+                  "name",
+                  "only_match"
+                ],
+                "description": "How the reference given to the tool was matched to this token."
+              },
+              "note": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Set when the match needs saying - other tokens share the ticker, or it was not an exact match."
+              },
+              "impersonating": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "chain",
+              "address",
+              "symbol",
+              "name",
+              "url",
+              "resolvedBy",
+              "note",
+              "impersonating"
+            ],
+            "additionalProperties": false
+          },
+          "total": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "supply": {
+            "type": "object",
+            "properties": {
+              "raw": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The integer amount as the chain stores it."
+              },
+              "decimals": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "whole": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "raw / 10^decimals, as a float for display. Use raw for arithmetic."
+              },
+              "symbol": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "raw",
+              "decimals",
+              "whole",
+              "symbol"
+            ],
+            "additionalProperties": false
+          },
+          "holders": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "wallet": {
+                  "type": "string"
+                },
+                "balance": {
+                  "type": "object",
+                  "properties": {
+                    "raw": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "The integer amount as the chain stores it."
+                    },
+                    "decimals": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "whole": {
+                      "anyOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "raw / 10^decimals, as a float for display. Use raw for arithmetic."
+                    },
+                    "symbol": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "raw",
+                    "decimals",
+                    "whole",
+                    "symbol"
+                  ],
+                  "additionalProperties": false
+                },
+                "shareOfSupplyPct": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "burnt": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "wallet",
+                "balance",
+                "shareOfSupplyPct",
+                "burnt"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "token",
+          "total",
+          "supply",
+          "holders"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_wallet",
+      "title": "Wallet",
+      "description": "What a wallet has on BaseStonk: \"holdings\" (every token it holds now, with balance and value, every chain unless one is named), \"pnl\" (profit and loss per token from its own trades - realised, unrealised, return) and \"dividends\" (what holding has paid it so far, in the pair, in the token and in kind, with a dollar total at today's prices). holdings and pnl by default; ask for dividends when the question is what holding has earned.",
+      "inputSchema": {
+        "type": "object",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "properties": {
+          "wallet": {
+            "type": "string",
+            "description": "The wallet address."
+          },
+          "chain": {
+            "description": "Only this chain. Omit for every chain.",
+            "type": "string",
+            "enum": [
+              "base",
+              "robinhood",
+              "arc"
+            ]
+          },
+          "include": {
+            "default": [
+              "holdings",
+              "pnl"
+            ],
+            "description": "Which parts to return.",
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "holdings",
+                "pnl",
+                "dividends"
+              ]
+            }
+          }
+        },
+        "required": [
+          "wallet"
+        ]
+      },
+      "annotations": {
+        "title": "Wallet",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "outputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "wallet": {
+            "type": "string"
+          },
+          "chain": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "base",
+                  "robinhood",
+                  "arc"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The chain filter applied; null means every chain."
+          },
+          "holdings": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "totalUsd": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "US dollars. null means not known - never read it as zero."
+                  },
+                  "rows": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "token": {
+                          "type": "object",
+                          "properties": {
+                            "chain": {
+                              "type": "string",
+                              "enum": [
+                                "base",
+                                "robinhood",
+                                "arc"
+                              ]
+                            },
+                            "address": {
+                              "type": "string"
+                            },
+                            "symbol": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "url": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "chain",
+                            "address",
+                            "symbol",
+                            "name",
+                            "url"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "balance": {
+                          "type": "object",
+                          "properties": {
+                            "raw": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "description": "The integer amount as the chain stores it."
+                            },
+                            "decimals": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "whole": {
+                              "anyOf": [
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "description": "raw / 10^decimals, as a float for display. Use raw for arithmetic."
+                            },
+                            "symbol": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "raw",
+                            "decimals",
+                            "whole",
+                            "symbol"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "valueUsd": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "US dollars. null means not known - never read it as zero."
+                        },
+                        "impersonating": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "token",
+                        "balance",
+                        "valueUsd",
+                        "impersonating"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "totalUsd",
+                  "rows"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "null when not asked for."
+          },
+          "pnl": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "positions": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "token": {
+                          "type": "object",
+                          "properties": {
+                            "chain": {
+                              "type": "string",
+                              "enum": [
+                                "base",
+                                "robinhood",
+                                "arc"
+                              ]
+                            },
+                            "address": {
+                              "type": "string"
+                            },
+                            "symbol": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "url": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "chain",
+                            "address",
+                            "symbol",
+                            "name",
+                            "url"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "open": {
+                          "type": "boolean"
+                        },
+                        "held": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Whole tokens held now."
+                        },
+                        "entryUsd": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Average price paid per token still held."
+                        },
+                        "costUsd": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "US dollars. null means not known - never read it as zero."
+                        },
+                        "valueUsd": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "null for an open position on a token with no price - not zero."
+                        },
+                        "unrealisedUsd": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "US dollars. null means not known - never read it as zero."
+                        },
+                        "realisedUsd": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "US dollars. null means not known - never read it as zero."
+                        },
+                        "totalUsd": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "US dollars. null means not known - never read it as zero."
+                        },
+                        "returnPct": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "boughtUsd": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "US dollars. null means not known - never read it as zero."
+                        },
+                        "soldUsd": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "US dollars. null means not known - never read it as zero."
+                        },
+                        "buys": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "sells": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "openedAt": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "impersonating": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "token",
+                        "open",
+                        "held",
+                        "entryUsd",
+                        "costUsd",
+                        "valueUsd",
+                        "unrealisedUsd",
+                        "realisedUsd",
+                        "totalUsd",
+                        "returnPct",
+                        "boughtUsd",
+                        "soldUsd",
+                        "buys",
+                        "sells",
+                        "openedAt",
+                        "impersonating"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "totals": {
+                    "type": "object",
+                    "properties": {
+                      "realisedUsd": {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "US dollars. null means not known - never read it as zero."
+                      },
+                      "unrealisedUsd": {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "US dollars. null means not known - never read it as zero."
+                      },
+                      "totalUsd": {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "US dollars. null means not known - never read it as zero."
+                      },
+                      "unpricedOpenPositions": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "realisedUsd",
+                      "unrealisedUsd",
+                      "totalUsd",
+                      "unpricedOpenPositions"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "chainsNotRead": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "base",
+                        "robinhood",
+                        "arc"
+                      ]
+                    },
+                    "description": "Chains the API refused; the totals do not include them."
+                  }
+                },
+                "required": [
+                  "positions",
+                  "totals",
+                  "chainsNotRead"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "null when not asked for."
+          },
+          "dividends": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "tokens": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "token": {
+                          "type": "object",
+                          "properties": {
+                            "chain": {
+                              "type": "string",
+                              "enum": [
+                                "base",
+                                "robinhood",
+                                "arc"
+                              ]
+                            },
+                            "address": {
+                              "type": "string"
+                            },
+                            "symbol": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "url": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "chain",
+                            "address",
+                            "symbol",
+                            "name",
+                            "url"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "inPair": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "asset": {
+                                  "type": "string"
+                                },
+                                "amount": {
+                                  "anyOf": [
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "raw": {
+                                          "anyOf": [
+                                            {
+                                              "type": "string"
+                                            },
+                                            {
+                                              "type": "null"
+                                            }
+                                          ],
+                                          "description": "The integer amount as the chain stores it."
+                                        },
+                                        "decimals": {
+                                          "type": "integer",
+                                          "minimum": -9007199254740991,
+                                          "maximum": 9007199254740991
+                                        },
+                                        "whole": {
+                                          "anyOf": [
+                                            {
+                                              "type": "number"
+                                            },
+                                            {
+                                              "type": "null"
+                                            }
+                                          ],
+                                          "description": "raw / 10^decimals, as a float for display. Use raw for arithmetic."
+                                        },
+                                        "symbol": {
+                                          "anyOf": [
+                                            {
+                                              "type": "string"
+                                            },
+                                            {
+                                              "type": "null"
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "raw",
+                                        "decimals",
+                                        "whole",
+                                        "symbol"
+                                      ],
+                                      "additionalProperties": false
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "null when the registry does not know the asset; rawAmount still holds the integer."
+                                },
+                                "rawAmount": {
+                                  "type": "string"
+                                },
+                                "valueUsd": {
+                                  "anyOf": [
+                                    {
+                                      "type": "number"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "At today's price."
+                                }
+                              },
+                              "required": [
+                                "asset",
+                                "amount",
+                                "rawAmount",
+                                "valueUsd"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Paid in the pair token."
+                        },
+                        "inToken": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "raw": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "The integer amount as the chain stores it."
+                                },
+                                "decimals": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                },
+                                "whole": {
+                                  "anyOf": [
+                                    {
+                                      "type": "number"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "raw / 10^decimals, as a float for display. Use raw for arithmetic."
+                                },
+                                "symbol": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "raw",
+                                "decimals",
+                                "whole",
+                                "symbol"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Paid in the launched token itself; not valued."
+                        },
+                        "inKind": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "asset": {
+                                "type": "string"
+                              },
+                              "amount": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "raw": {
+                                        "anyOf": [
+                                          {
+                                            "type": "string"
+                                          },
+                                          {
+                                            "type": "null"
+                                          }
+                                        ],
+                                        "description": "The integer amount as the chain stores it."
+                                      },
+                                      "decimals": {
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991
+                                      },
+                                      "whole": {
+                                        "anyOf": [
+                                          {
+                                            "type": "number"
+                                          },
+                                          {
+                                            "type": "null"
+                                          }
+                                        ],
+                                        "description": "raw / 10^decimals, as a float for display. Use raw for arithmetic."
+                                      },
+                                      "symbol": {
+                                        "anyOf": [
+                                          {
+                                            "type": "string"
+                                          },
+                                          {
+                                            "type": "null"
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "raw",
+                                      "decimals",
+                                      "whole",
+                                      "symbol"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "null when the registry does not know the asset; rawAmount still holds the integer."
+                              },
+                              "rawAmount": {
+                                "type": "string"
+                              },
+                              "valueUsd": {
+                                "anyOf": [
+                                  {
+                                    "type": "number"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "At today's price."
+                              }
+                            },
+                            "required": [
+                              "asset",
+                              "amount",
+                              "rawAmount",
+                              "valueUsd"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "description": "Paid in basket assets - wrapped stocks, majors, memes."
+                        }
+                      },
+                      "required": [
+                        "token",
+                        "inPair",
+                        "inToken",
+                        "inKind"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "vault": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "usd": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "This wallet's share of the vault's published total - valued at payout where recorded, today's price otherwise (approximateRounds)."
+                          },
+                          "rounds": {
+                            "type": "number"
+                          },
+                          "approximateRounds": {
+                            "type": "number"
+                          },
+                          "unpricedRounds": {
+                            "type": "number"
+                          },
+                          "byAsset": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "asset": {
+                                  "type": "string"
+                                },
+                                "amount": {
+                                  "anyOf": [
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "raw": {
+                                          "anyOf": [
+                                            {
+                                              "type": "string"
+                                            },
+                                            {
+                                              "type": "null"
+                                            }
+                                          ],
+                                          "description": "The integer amount as the chain stores it."
+                                        },
+                                        "decimals": {
+                                          "type": "integer",
+                                          "minimum": -9007199254740991,
+                                          "maximum": 9007199254740991
+                                        },
+                                        "whole": {
+                                          "anyOf": [
+                                            {
+                                              "type": "number"
+                                            },
+                                            {
+                                              "type": "null"
+                                            }
+                                          ],
+                                          "description": "raw / 10^decimals, as a float for display. Use raw for arithmetic."
+                                        },
+                                        "symbol": {
+                                          "anyOf": [
+                                            {
+                                              "type": "string"
+                                            },
+                                            {
+                                              "type": "null"
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "raw",
+                                        "decimals",
+                                        "whole",
+                                        "symbol"
+                                      ],
+                                      "additionalProperties": false
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "null when the registry does not know the asset; rawAmount still holds the integer."
+                                },
+                                "rawAmount": {
+                                  "type": "string"
+                                },
+                                "valueUsd": {
+                                  "anyOf": [
+                                    {
+                                      "type": "number"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "At today's price."
+                                }
+                              },
+                              "required": [
+                                "asset",
+                                "amount",
+                                "rawAmount",
+                                "valueUsd"
+                              ],
+                              "additionalProperties": false
+                            }
+                          }
+                        },
+                        "required": [
+                          "usd",
+                          "rounds",
+                          "approximateRounds",
+                          "unpricedRounds",
+                          "byAsset"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "What the $BSTONK basket vault paid this wallet in kind. null when it could not be read or the chain filter excludes Base; notIncluded then says so."
+                  },
+                  "totals": {
+                    "type": "object",
+                    "properties": {
+                      "valuedUsd": {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Token-tax dividends only: the priced pair and in-kind amounts at TODAY'S prices. The vault's figure is separate (vault.usd) because it is valued at payout."
+                      },
+                      "unpricedAmounts": {
+                        "type": "number",
+                        "description": "Amounts left out of valuedUsd because the registry has no price or decimals for the asset."
+                      }
+                    },
+                    "required": [
+                      "valuedUsd",
+                      "unpricedAmounts"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "chainsNotRead": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "base",
+                        "robinhood",
+                        "arc"
+                      ]
+                    }
+                  },
+                  "notIncluded": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "pending",
+                        "bstonk_basket_vault"
+                      ]
+                    },
+                    "description": "What these figures leave out. \"pending\": rewards accruing or claimable now. \"bstonk_basket_vault\": the $BSTONK basket vault, only when it could not be read."
+                  }
+                },
+                "required": [
+                  "tokens",
+                  "vault",
+                  "totals",
+                  "chainsNotRead",
+                  "notIncluded"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Paid so far, as listed in notIncluded. null when not asked for."
+          }
+        },
+        "required": [
+          "wallet",
+          "chain",
+          "holdings",
+          "pnl",
+          "dividends"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_platform",
+      "title": "Platform",
+      "description": "BaseStonk as a whole. \"stats\": tokens launched, trades, volume, holders, revenue to creators and the platform, dividends paid through baskets (the default). \"burn\": how much $BSTONK has been burnt, in-pool and by buyback - the flywheel number. \"basket\": what the $BSTONK dividend basket has paid holders, IN KIND as wrapped stocks, majors and memes, round by round. \"comps\": BaseStonk against other launchpads on fees and volume per dollar of market cap. burn and basket are about $BSTONK, which lives on Base.",
+      "inputSchema": {
+        "type": "object",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "properties": {
+          "include": {
+            "default": [
+              "stats"
+            ],
+            "description": "Which parts to return. Default: stats.",
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "stats",
+                "burn",
+                "basket",
+                "comps"
+              ]
+            }
+          },
+          "chain": {
+            "default": "base",
+            "description": "For stats: base (default), robinhood or arc. burn, basket and comps are not per chain.",
+            "type": "string",
+            "enum": [
+              "base",
+              "robinhood",
+              "arc"
+            ]
+          },
+          "basketRounds": {
+            "default": 12,
+            "description": "For basket: how many recent payout rounds to list.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50
+          }
+        }
+      },
+      "annotations": {
+        "title": "Platform",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "outputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "chain": {
+            "type": "string",
+            "enum": [
+              "base",
+              "robinhood",
+              "arc"
+            ]
+          },
+          "stats": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "chain": {
+                    "type": "string",
+                    "enum": [
+                      "base",
+                      "robinhood",
+                      "arc"
+                    ]
+                  },
+                  "totals": {
+                    "type": "object",
+                    "properties": {
+                      "tokens": {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "trades": {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "volumeTotalUsd": {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "US dollars. null means not known - never read it as zero."
+                      },
+                      "volume24hUsd": {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "US dollars. null means not known - never read it as zero."
+                      },
+                      "holders": {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "creatorRevenueUsd": {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "US dollars. null means not known - never read it as zero."
+                      },
+                      "platformRevenueUsd": {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "US dollars. null means not known - never read it as zero."
+                      }
+                    },
+                    "required": [
+                      "tokens",
+                      "trades",
+                      "volumeTotalUsd",
+                      "volume24hUsd",
+                      "holders",
+                      "creatorRevenueUsd",
+                      "platformRevenueUsd"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "basketPaid": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "usd": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "US dollars. null means not known - never read it as zero."
+                          },
+                          "approximateRounds": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "unpricedRounds": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "usd",
+                          "approximateRounds",
+                          "unpricedRounds"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "allChains": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "tokens": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "trades": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "volumeTotalUsd": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "US dollars. null means not known - never read it as zero."
+                          },
+                          "volume24hUsd": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "US dollars. null means not known - never read it as zero."
+                          },
+                          "holders": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "creatorRevenueUsd": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "US dollars. null means not known - never read it as zero."
+                          },
+                          "platformRevenueUsd": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "US dollars. null means not known - never read it as zero."
+                          }
+                        },
+                        "required": [
+                          "tokens",
+                          "trades",
+                          "volumeTotalUsd",
+                          "volume24hUsd",
+                          "holders",
+                          "creatorRevenueUsd",
+                          "platformRevenueUsd"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "chain",
+                  "totals",
+                  "basketPaid",
+                  "allChains"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "burn": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "object",
+                    "properties": {
+                      "chain": {
+                        "type": "string",
+                        "enum": [
+                          "base",
+                          "robinhood",
+                          "arc"
+                        ]
+                      },
+                      "address": {
+                        "type": "string"
+                      },
+                      "symbol": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "url": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "chain",
+                      "address",
+                      "symbol",
+                      "name",
+                      "url"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "totalBurnt": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "shareOfSupplyPct": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "fromPool": {
+                    "type": "object",
+                    "properties": {
+                      "burns": {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "tokens": {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "burns",
+                      "tokens"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "fromPlatform": {
+                    "type": "object",
+                    "properties": {
+                      "burns": {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "tokens": {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "usdcSpent": {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "US dollars. null means not known - never read it as zero."
+                      },
+                      "lastAt": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "burns",
+                      "tokens",
+                      "usdcSpent",
+                      "lastAt"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "token",
+                  "totalBurnt",
+                  "shareOfSupplyPct",
+                  "fromPool",
+                  "fromPlatform"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "basket": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "totalPaidUsd": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "US dollars. null means not known - never read it as zero."
+                  },
+                  "approximateRounds": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "unpricedRounds": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "roundsDelivered": {
+                    "type": "number"
+                  },
+                  "roundsPriced": {
+                    "type": "number"
+                  },
+                  "byAsset": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "symbol": {
+                          "type": "string"
+                        },
+                        "rounds": {
+                          "type": "number"
+                        },
+                        "stampedUsd": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "symbol",
+                        "rounds",
+                        "stampedUsd"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "recent": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "round": {
+                          "type": "number"
+                        },
+                        "amount": {
+                          "type": "object",
+                          "properties": {
+                            "raw": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "description": "The integer amount as the chain stores it."
+                            },
+                            "decimals": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "whole": {
+                              "anyOf": [
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "description": "raw / 10^decimals, as a float for display. Use raw for arithmetic."
+                            },
+                            "symbol": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "raw",
+                            "decimals",
+                            "whole",
+                            "symbol"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "stampedUsd": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "US dollars. null means not known - never read it as zero."
+                        },
+                        "holders": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "committedAt": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "round",
+                        "amount",
+                        "stampedUsd",
+                        "holders",
+                        "committedAt"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "totalPaidUsd",
+                  "approximateRounds",
+                  "unpricedRounds",
+                  "roundsDelivered",
+                  "roundsPriced",
+                  "byAsset",
+                  "recent"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "comps": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "asOf": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "rows": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "venue": {
+                          "type": "string"
+                        },
+                        "chains": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "marketCapUsd": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "US dollars. null means not known - never read it as zero."
+                        },
+                        "fees30dUsd": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "US dollars. null means not known - never read it as zero."
+                        },
+                        "volume30dUsd": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "US dollars. null means not known - never read it as zero."
+                        },
+                        "feesToHoldersPct": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "feesPer100Cap": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "volumePer1Cap": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "source": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "note": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "venue",
+                        "chains",
+                        "marketCapUsd",
+                        "fees30dUsd",
+                        "volume30dUsd",
+                        "feesToHoldersPct",
+                        "feesPer100Cap",
+                        "volumePer1Cap",
+                        "source",
+                        "note"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "implied": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "venue": {
+                          "type": "string"
+                        },
+                        "atTheirFeesRatioUsd": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "US dollars. null means not known - never read it as zero."
+                        },
+                        "atTheirVolumeRatioUsd": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "US dollars. null means not known - never read it as zero."
+                        }
+                      },
+                      "required": [
+                        "venue",
+                        "atTheirFeesRatioUsd",
+                        "atTheirVolumeRatioUsd"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "summary": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "asOf",
+                  "rows",
+                  "implied",
+                  "summary"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "chain",
+          "stats",
+          "burn",
+          "basket",
+          "comps"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "check_pair",
+      "title": "Check a launch pair",
+      "description": "Can a token be launched paired against this asset? Checks whether the pair is admitted and deep enough on that chain. Pass a ticker (USDC, WETH, cbBTC, AAPLc, SPY…) or an address.",
+      "inputSchema": {
+        "type": "object",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "properties": {
+          "pair": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Pair ticker or address."
+          },
+          "chain": {
+            "default": "base",
+            "description": "Which chain: \"base\" (default), \"robinhood\" (Robinhood Chain) or \"arc\" (Arc).",
+            "type": "string",
+            "enum": [
+              "base",
+              "robinhood",
+              "arc"
+            ]
+          }
+        },
+        "required": [
+          "pair"
+        ]
+      },
+      "annotations": {
+        "title": "Check a launch pair",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "outputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "chain": {
+            "type": "string",
+            "enum": [
+              "base",
+              "robinhood",
+              "arc"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "launchable",
+              "step",
+              "refused",
+              "unknown_pair"
+            ],
+            "description": "\"step\" means launchable after the action in `sentence`; it is not a refusal."
+          },
+          "sentence": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "pair": {
+            "type": "object",
+            "properties": {
+              "address": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "symbol": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "name": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "registered": {
+                "type": "boolean"
+              },
+              "kind": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "priceUsd": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "US dollars. null means not known - never read it as zero."
+              }
+            },
+            "required": [
+              "address",
+              "symbol",
+              "name",
+              "registered",
+              "kind",
+              "priceUsd"
+            ],
+            "additionalProperties": false
+          },
+          "liquidityUsd": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "US dollars. null means not known - never read it as zero."
+          },
+          "launchUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "chain",
+          "status",
+          "sentence",
+          "pair",
+          "liquidityUsd",
+          "launchUrl"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "launch_link",
+      "title": "Link to launch on basestonk.io",
+      "description": "Build a basestonk.io/create link with the launch form pre-filled, plus a handle for get_intent. Checks the pair first and refuses one the chain would refuse. This tool only returns a URL: nothing is deployed, signed or sent here. The user opens the link in their browser and decides there, in their own wallet. Afterwards, get_intent with the handle reports whether a token went live at that address.",
+      "inputSchema": {
+        "type": "object",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "description": "Token name."
+          },
+          "symbol": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16,
+            "description": "Ticker symbol."
+          },
+          "pair": {
+            "description": "Pair ticker or address (default $BSTONK on Base). A pair is permanent - confirm it with the user.",
+            "type": "string"
+          },
+          "marketCapUsd": {
+            "description": "Opening fully-diluted market cap in USD (default 3000).",
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "chain": {
+            "default": "base",
+            "description": "Which chain: \"base\" (default), \"robinhood\" (Robinhood Chain) or \"arc\" (Arc).",
+            "type": "string",
+            "enum": [
+              "base",
+              "robinhood",
+              "arc"
+            ]
+          },
+          "template": {
+            "description": "A partner preset id. Its chain, pair, taxes and payee split come from the preset, which this tool reads and states in its answer; do not pass pair with it.",
+            "type": "string",
+            "enum": [
+              "reppo-datanet"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "symbol"
+        ]
+      },
+      "annotations": {
+        "title": "Link to launch on basestonk.io",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "_meta": {
+        "ui": {
+          "resourceUri": "ui://basestonk/app.html"
+        },
+        "ui/resourceUri": "ui://basestonk/app.html"
+      },
+      "outputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "intent": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "The handle. Pass it back to get_intent unchanged to learn whether the user completed it on the site."
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "launch",
+                  "buy"
+                ]
+              },
+              "chain": {
+                "type": "string",
+                "enum": [
+                  "base",
+                  "robinhood",
+                  "arc"
+                ]
+              },
+              "createdAt": {
+                "type": "string"
+              },
+              "expiresAt": {
+                "type": "string",
+                "description": "After this get_intent stops looking."
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "chain",
+              "createdAt",
+              "expiresAt"
+            ],
+            "additionalProperties": false
+          },
+          "url": {
+            "type": "string",
+            "description": "Where the user reviews and signs, in their own wallet."
+          },
+          "name": {
+            "type": "string"
+          },
+          "symbol": {
+            "type": "string"
+          },
+          "pair": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "address": {
+                    "type": "string"
+                  },
+                  "symbol": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "launchable",
+                      "step",
+                      "unchecked"
+                    ]
+                  },
+                  "sentence": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "address",
+                  "symbol",
+                  "status",
+                  "sentence"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "marketCapUsd": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "US dollars. null means not known - never read it as zero."
+          },
+          "template": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "preset": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "partner": {
+                    "type": "string"
+                  },
+                  "chain": {
+                    "type": "string"
+                  },
+                  "pair": {
+                    "type": "string"
+                  },
+                  "blurb": {
+                    "type": "string"
+                  },
+                  "buyTaxBps": {
+                    "type": "number"
+                  },
+                  "sellTaxBps": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "id",
+                  "label",
+                  "partner",
+                  "chain",
+                  "pair",
+                  "blurb",
+                  "buyTaxBps",
+                  "sellTaxBps"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The partner preset as the API serves it, read at call time - its pair, taxes and payee split are the preset's, never a copy carried here."
+          }
+        },
+        "required": [
+          "intent",
+          "url",
+          "name",
+          "symbol",
+          "pair",
+          "marketCapUsd",
+          "template",
+          "preset"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "trade_link",
+      "title": "Link to a token page on basestonk.io",
+      "description": "Build a link to a token's basestonk.io page with the amount box pre-filled, plus a handle for get_intent. Resolves the token without guessing between tokens that share a ticker. This tool only returns a URL: nothing is executed, signed or sent here. The user opens the link in their browser and decides there, in their own wallet. Afterwards, get_intent with the handle and a wallet reports whether that wallet completed it on the site.",
+      "inputSchema": {
+        "type": "object",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "properties": {
+          "token": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Token address (0x…) or ticker symbol, e.g. \"BSTONK\" or \"$GROK\". An address is exact; a ticker several launches share is answered with the candidates to choose from."
+          },
+          "chain": {
+            "default": "base",
+            "description": "Which chain: \"base\" (default), \"robinhood\" (Robinhood Chain) or \"arc\" (Arc).",
+            "type": "string",
+            "enum": [
+              "base",
+              "robinhood",
+              "arc"
+            ]
+          },
+          "amount": {
+            "description": "Amount to pre-fill in the buy box, in units of the PAIR token this launch trades against (dollars only when the pair is a stablecoin). Ask the user which if unsure.",
+            "type": "number",
+            "exclusiveMinimum": 0
+          }
+        },
+        "required": [
+          "token"
+        ]
+      },
+      "annotations": {
+        "title": "Link to a token page on basestonk.io",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "_meta": {
+        "ui": {
+          "resourceUri": "ui://basestonk/app.html"
+        },
+        "ui/resourceUri": "ui://basestonk/app.html"
+      },
+      "outputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "intent": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "The handle. Pass it back to get_intent unchanged to learn whether the user completed it on the site."
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "launch",
+                  "buy"
+                ]
+              },
+              "chain": {
+                "type": "string",
+                "enum": [
+                  "base",
+                  "robinhood",
+                  "arc"
+                ]
+              },
+              "createdAt": {
+                "type": "string"
+              },
+              "expiresAt": {
+                "type": "string",
+                "description": "After this get_intent stops looking."
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "chain",
+              "createdAt",
+              "expiresAt"
+            ],
+            "additionalProperties": false
+          },
+          "url": {
+            "type": "string"
+          },
+          "token": {
+            "type": "object",
+            "properties": {
+              "chain": {
+                "type": "string",
+                "enum": [
+                  "base",
+                  "robinhood",
+                  "arc"
+                ]
+              },
+              "address": {
+                "type": "string"
+              },
+              "symbol": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string"
+              },
+              "resolvedBy": {
+                "type": "string",
+                "enum": [
+                  "address",
+                  "ticker",
+                  "name",
+                  "only_match"
+                ],
+                "description": "How the reference given to the tool was matched to this token."
+              },
+              "note": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Set when the match needs saying - other tokens share the ticker, or it was not an exact match."
+              },
+              "impersonating": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "chain",
+              "address",
+              "symbol",
+              "name",
+              "url",
+              "resolvedBy",
+              "note",
+              "impersonating"
+            ],
+            "additionalProperties": false
+          },
+          "amount": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "number"
+                  },
+                  "unit": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "value",
+                  "unit"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Pre-filled buy size. `unit` is the PAIR token symbol, which is dollars only when the pair is a stablecoin."
+          },
+          "priceUsd": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "US dollars. null means not known - never read it as zero."
+          },
+          "marketCapUsd": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "US dollars. null means not known - never read it as zero."
+          },
+          "buyTaxBps": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sellTaxBps": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "intent",
+          "url",
+          "token",
+          "amount",
+          "priceUsd",
+          "marketCapUsd",
+          "buyTaxBps",
+          "sellTaxBps"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_intent",
+      "title": "Check a link",
+      "description": "Did the user complete what a launch_link or trade_link pointed at, on the site? Read from the public chain index; this tool cannot see or affect the user's wallet. Pass the handle back unchanged. A launch answers with the new token address once it is on chain. A buy needs the buyer wallet, because a buy on a public pool cannot be attributed to a draft any other way.",
+      "inputSchema": {
+        "type": "object",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "properties": {
+          "intent": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1024,
+            "description": "The intent.id a draft returned, unchanged."
+          },
+          "wallet": {
+            "description": "For a buy: the wallet that bought.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "intent"
+        ]
+      },
+      "annotations": {
+        "title": "Check a link",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "outputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "intent": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "The handle. Pass it back to get_intent unchanged to learn whether the user completed it on the site."
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "launch",
+                  "buy"
+                ]
+              },
+              "chain": {
+                "type": "string",
+                "enum": [
+                  "base",
+                  "robinhood",
+                  "arc"
+                ]
+              },
+              "createdAt": {
+                "type": "string"
+              },
+              "expiresAt": {
+                "type": "string",
+                "description": "After this get_intent stops looking."
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "chain",
+              "createdAt",
+              "expiresAt"
+            ],
+            "additionalProperties": false
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "done",
+              "not_seen",
+              "ambiguous",
+              "needs_wallet",
+              "expired"
+            ],
+            "description": "done: found on chain. not_seen: nothing matching yet. ambiguous: more than one match. needs_wallet: a buy can only be found with the buyer wallet. expired: drafted over seven days ago and never seen."
+          },
+          "sentence": {
+            "type": "string"
+          },
+          "token": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "chain": {
+                    "type": "string",
+                    "enum": [
+                      "base",
+                      "robinhood",
+                      "arc"
+                    ]
+                  },
+                  "address": {
+                    "type": "string"
+                  },
+                  "symbol": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "url": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "chain",
+                  "address",
+                  "symbol",
+                  "name",
+                  "url"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "For a launch: the token it created."
+          },
+          "txHashes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "candidates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "chain": {
+                  "type": "string",
+                  "enum": [
+                    "base",
+                    "robinhood",
+                    "arc"
+                  ]
+                },
+                "address": {
+                  "type": "string"
+                },
+                "symbol": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "chain",
+                "address",
+                "symbol",
+                "name",
+                "url"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Set when several launches match the draft."
+          }
+        },
+        "required": [
+          "intent",
+          "status",
+          "sentence",
+          "token",
+          "txHashes",
+          "candidates"
+        ],
+        "additionalProperties": false
+      }
+    }
+  ]
+}

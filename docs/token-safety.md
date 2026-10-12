@@ -1,0 +1,78 @@
+<!-- Snapshot of https://docs.basestonk.io/token-safety.md taken 2026-10-10T17:22:37.428Z. Live version: https://docs.basestonk.io/token-safety -->
+
+# Scanner flags, explained
+
+> What automated scanners flag on BaseStonk launches, what fires it, and what is actually true.
+
+Safety scanners raise the same few flags on advanced BaseStonk launches.
+Most are heuristics meeting an architecture they were not written for.
+
+| Flag | Verdict | Why it fires |
+| - | - | - |
+| **Creator can move funds** | **False** | an external call on every transfer - the dividend tracker notification |
+| **Unlocked liquidity / 0% locked** | **Model mismatch** | v4 has no LP token to lock or burn; the position lives in the PoolManager |
+| **High transfer fees** | **Usually true** | the token's tax (plus a 0.3% pool fee on launches before V7) - the creator's published choice |
+| **Unverified contract** | **False on Base and Robinhood Chain; true on Arc** | every active Base and Robinhood Chain contract is verified on its explorer. Arc's explorer cannot verify source code yet |
+| **Unverified token** | **About the list, not the token** | absent from the scanner's own curated list |
+
+## Creator can move funds
+
+The token has three privileged functions. Every one is restricted to the
+**launcher contract**, never the creator:
+
+| Function | Does | Cannot |
+| - | - | - |
+| `setExempt(address,bool)` | toggle a max-wallet exemption | |
+| `setRewardTracker(address)` | bind the tracker **once** - a second call reverts `TrackerAlreadySet` | be repointed |
+| `finishLaunch()` | flip a one-way launched flag | |
+
+No mint, no owner burn, no balance move; `_update` moves tokens only
+through the inherited ERC-20. V6 also checks identity at binding: the
+tracker must answer `token()` and `launcher()` correctly, so it is
+provably the distributor deployed for this token.
+
+What trips the heuristic:
+
+```solidity theme={null}
+(bool ok, ) = tracker.call{gas: 5_000_000}(
+    abi.encodeWithSignature("ping(address,address,uint256)", from, to, value)
+);
+ok;
+```
+
+An external call to a stored address on every transfer is a real malware
+signature. Here the callee reads balances and settles dividends, and the
+result is discarded.
+
+<Note>
+  Simple launches have no tracker and no external call, so they scan clean. The difference is the mode, not the generation.
+</Note>
+
+## Unlocked liquidity
+
+Scanners look for burned or locked **LP tokens** - a v2/v3 concept. v4
+has none; the position is keyed inside the PoolManager. Launch liquidity
+is added in the launcher's own unlock callback with a strictly positive
+`liquidityDelta`, and the callback rejects any caller but the PoolManager. Why it cannot be pulled: [the sell floor](/trading#the-sell-floor).
+
+## High transfer fees
+
+A 4% V7 launch measures at 4% - V7 pools charge no LP fee. A launch from
+before V7 measures at about 4.1%, tax plus the 0.3% pool fee. Quote against the
+token's published `buyTaxBps` and `sellTaxBps`, not a default. A scanner
+simulating inside the anti-sniper window measures the decaying toll,
+which is gone within 30 minutes.
+
+<Warning>
+  A token that copies a BaseStonk name is not a BaseStonk launch. Anything the platform deployed traces to a launcher on the [contract reference](/integration/contracts). Check the launcher, not the name.
+</Warning>
+
+## For scanner operators
+
+Two checks separate a BaseStonk launch from the pattern it resembles:
+
+1. **Admin surface** - the only privileged functions are the three above, each reverting for any caller but the launcher.
+2. **Call-target mutability** - `setRewardTracker` is one-way and, on V6, identity-checked.
+
+
+This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

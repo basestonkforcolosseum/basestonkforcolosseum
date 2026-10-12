@@ -1,0 +1,62 @@
+<!-- Snapshot of https://docs.basestonk.io/quickstart.md taken 2026-10-10T17:22:37.428Z. Live version: https://docs.basestonk.io/quickstart -->
+
+# Quickstart
+
+> Trade a token or launch one, in three steps each.
+
+## Trade
+
+<Steps>
+  <Step title="Connect">
+    Open [basestonk.io](https://basestonk.io). Any EVM wallet; mobile through WalletConnect. Pick **Base**, **Robinhood Chain** or **Arc** in the header. Once connected, press your address in the header to open the [wallet sheet](/holding#the-wallet-sheet).
+  </Step>
+
+  <Step title="Pick a token">
+    Sort by market cap, volume, holders or age. Each card shows the pair and the tax.
+  </Step>
+
+  <Step title="Buy with what you hold">
+    Pay in the token's pair, or in ETH or WETH (Base, Robinhood Chain), or USDC (Base, Arc). The panel routes into the pair for you and shows how many wallet signatures the trade needs before you press the button. Some wallets can [approve and trade in one signature](/trading#approve-and-trade-in-one-signature).
+  </Step>
+</Steps>
+
+<Tip>
+  Press `Ctrl`/`Cmd`+`K` to search from anywhere. Type *launch*, *portfolio*, *claim*, *bridge* or *docs* and a shortcut to the page appears above the token results (*claim* opens your portfolio).
+</Tip>
+
+<Note>
+  A few Coinbase B20 stocks on Base have no on-chain market yet. For those you must already hold the stock - the panel says so. [Stock pairs →](/stock-pairs)
+</Note>
+
+## Launch
+
+<Steps>
+  <Step title="Open the form">
+    [basestonk.io/create](https://basestonk.io/create). Launching is free; you pay gas and any dev buy.
+  </Step>
+
+  <Step title="Name, pair, opening market cap">
+    The name is on the **Info** tab. The pair and the **Starting market cap** are on the **Pair** tab.
+
+    | Pair | Cap range |
+    | - | - |
+    | Standard, Base | \$500 - \$10,000 |
+    | Gated ecosystem, Base | \$250 - \$15,000 |
+    | Any, Robinhood Chain or Arc | \$500 - \$10,000 |
+
+    On Robinhood Chain and Arc the form keeps to \$500 - \$10,000. The
+    launcher contract on both chains accepts \$250 - \$15,000, and so does the
+    [agent API](/integration/agents#launch) on Robinhood Chain.
+
+    The pair's live on-chain price converts your figure to a pool price when you sign.
+  </Step>
+
+  <Step title="Optionally buy in the same transaction">
+    On the **Dev buy** tab. Nobody gets in ahead of you. To your wallet: capped at 10% of supply. Into a [vesting vault](/vesting): uncapped, schedule public on-chain. Then review everything on the **Launch** tab and sign.
+  </Step>
+</Steps>
+
+Everything else on the form - fees, dividends, buybacks, caps - is on [Launching](/launching).
+
+
+This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

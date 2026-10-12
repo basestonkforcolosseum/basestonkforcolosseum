@@ -1,0 +1,92 @@
+{
+  "capturedAt": "2026-10-10T12:59:33.647Z",
+  "endpoint": "https://mainnet.base.org",
+  "results": [
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "eth_chainId",
+        "params": []
+      },
+      "result": "0x2105"
+    },
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "method": "eth_getBlockByNumber",
+        "params": [
+          "0x314d5af",
+          false
+        ]
+      },
+      "block": {
+        "number": 51697071,
+        "hash": "0xbe67c2874d4060daa06e371c2eb2283f2dceba6ad5d725978d0d802bf670013d",
+        "timestamp": "0x6ab40841",
+        "utc": "2026-09-23T17:11:29.000Z"
+      }
+    },
+    {
+      "contract": "AdvancedLauncherB20V6B",
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "method": "eth_getCode",
+        "params": [
+          "0xEb743E4D89fBE31F5145EbC189A19E1b71dE4E3b",
+          "0x314d5ae"
+        ]
+      },
+      "block": 51697070,
+      "byteCount": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "contract": "AdvancedLauncherB20V6B",
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "method": "eth_getCode",
+        "params": [
+          "0xEb743E4D89fBE31F5145EbC189A19E1b71dE4E3b",
+          "0x314d5af"
+        ]
+      },
+      "block": 51697071,
+      "byteCount": 12765,
+      "sha256": "149eb6302f3fbba40daf42f835caaf18e6df7d4b2b3e064c43e0c55c865ba77a"
+    },
+    {
+      "contract": "AdvancedFeeHookV6B (B20)",
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 5,
+        "method": "eth_getCode",
+        "params": [
+          "0x3e6B46810b1fd5085086Fd1417E8adB02f34a044",
+          "0x314d5ae"
+        ]
+      },
+      "block": 51697070,
+      "byteCount": 17593,
+      "sha256": "82cbecc9ebf918b8401f9bb50e076c3f5106c1fc215877c7d30d07da9aaf462a"
+    },
+    {
+      "contract": "AdvancedFeeHookV6B (B20)",
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 6,
+        "method": "eth_getCode",
+        "params": [
+          "0x3e6B46810b1fd5085086Fd1417E8adB02f34a044",
+          "0x314d5af"
+        ]
+      },
+      "block": 51697071,
+      "byteCount": 17593,
+      "sha256": "82cbecc9ebf918b8401f9bb50e076c3f5106c1fc215877c7d30d07da9aaf462a"
+    }
+  ]
+}

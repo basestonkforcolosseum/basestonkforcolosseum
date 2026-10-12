@@ -1,0 +1,38 @@
+{
+  "snapshotUtc": "2026-10-10T12:58:53.232Z",
+  "eventStartUtc": "2026-09-14T13:00:00.000Z",
+  "listedLaunches": {
+    "total": 4135,
+    "beforeEvent": 1194,
+    "duringEvent": 2941
+  },
+  "launchesPerWeek": {
+    "beforeEvent_17Aug_to_14Sep": 287,
+    "duringEvent": 792
+  },
+  "creatorWalletsDuringEvent": 633,
+  "pairKindDuringEvent": {
+    "equity": 1148,
+    "crypto": 1275,
+    "meme": 293,
+    "stable": 179,
+    "unclassified": 14,
+    "rwa": 32
+  },
+  "v7": {
+    "launches": 290,
+    "creatorWallets": 96,
+    "firstLaunch": "2026-10-03T20:11:29.000Z"
+  },
+  "b20": {
+    "total": 431,
+    "beforeEvent": 40,
+    "sinceV6BLauncher": 391
+  },
+  "method": "Public launch list /api/v1/launchpad/tokens (all pages, three chains) and the complete pair registry /api/v1/launchpad/pairs/{chain}?limit=5000. Reproduce live with examples/03-event-period-launches.mjs.",
+  "caveats": [
+    "Listed launches; the stats endpoint may report a slightly different indexed total.",
+    "Creator wallets are addresses, not people.",
+    "pairKind comes from the platform pair registry; equity = tokenized stocks."
+  ]
+}

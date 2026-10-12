@@ -1,0 +1,66 @@
+<!-- Snapshot of https://docs.basestonk.io/referrals.md taken 2026-10-10T17:22:37.428Z. Live version: https://docs.basestonk.io/referrals -->
+
+# Referrals
+
+> Paid on every trade your network ever makes, five levels deep, in USDC, automatically.
+
+Bring traders and you are paid a share of the platform's cut on **every
+trade they ever make** - and on the trades of everyone they bring, down
+five levels.
+
+<Note>
+  **Base only.** A link is created by holding USDC on Base and rewards are paid there from Base's fees. Robinhood Chain trades do not accrue referral rewards.
+</Note>
+
+## How it works
+
+| | |
+| - | - |
+| Get a link | your [portfolio](https://basestonk.io/portfolio) |
+| Who counts | anyone who arrives through it, and their network, five levels down |
+| Paid from | the platform's real on-chain cut of each swap - never the creator's or holders' |
+| Expires | never - a trader from two years ago pays you on today's volume |
+| For them | applying a code takes a slice off the platform's cut on their trades |
+| Payout | a single USDC transfer to your wallet on a rolling schedule; under \$0.50 rolls forward |
+| Claiming | none. Your running accrual is always in your portfolio. |
+
+## What you are sharing in
+
+The platform's cut is 0.5% - 1% of every dollar traded ([Fees](/fees)).
+
+| Your network's daily volume | Platform fees per year |
+| - | - |
+| \$100k | \$182k - \$365k |
+| \$500k | \$912k - \$1.8M |
+| \$1M | \$1.8M - \$3.65M |
+| \$5M | \$9.1M - \$18.2M |
+
+Your share is attached to your code and shown in your portfolio. The
+internal rate structure is deliberately not published; your own earnings
+always are.
+
+## Five levels, honestly
+
+Most multi-level schemes decay to nothing by the third hop because each
+level takes a fraction *of the fraction below it*. Here **every level is
+a share of the same trade fee** - depth five is a smaller share, but of
+the whole fee. Recruiting recruiters beats recruiting traders.
+
+## Bring an audience
+
+Self-serve is open to everyone. Real distribution - an audience, a
+community - can be arranged on [X](https://x.com/BaseStonk), including a
+vanity code that reads as your name.
+
+<AccordionGroup>
+  <Accordion title="The formula">
+    $E = \sum_{d=1}^{5} \rho_d \cdot \Phi_d$, where $\Phi_d$ is the platform fee of every trade at depth $d$. Note what it is *not*: $\sum_d \rho^{d} \Phi_d$. No compounding of fractions down the chain.
+  </Accordion>
+
+  <Accordion title="Why a tree outpays a branch">
+    If each member brings $k$ more, depth $d$ holds $k^{d-1}$ times your first level and $E \propto \sum_d \rho_d k^{d-1} \bar V$. For any $k > 1$ the deep terms dominate. Five people who build are worth more than fifty who only trade.
+  </Accordion>
+</AccordionGroup>
+
+
+This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

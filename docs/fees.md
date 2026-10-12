@@ -1,0 +1,73 @@
+<!-- Snapshot of https://docs.basestonk.io/fees.md taken 2026-10-10T17:22:37.428Z. Live version: https://docs.basestonk.io/fees -->
+
+# Fees
+
+> Who pays what, and who earns it.
+
+Every trade pays the fee its creator set at launch. Transfers are free.
+The fee is taken inside the swap, so there is no route around it.
+
+<Warning>
+  **The fee is a percentage of each trade, not a share of an LP fee.** A \$10,000 swap against a token routing 3% to holders sends about \$300 to holders.
+</Warning>
+
+## What the fee is paid in
+
+The fee is taken from what the trade pays out. On a **buy**, that is the
+token being bought. On a **sell**, it is the pair. So everyone who earns a
+share of the fee, a fee address included, receives **both**: the token
+from buys and the pair from sells.
+
+## Rates
+
+| | Simple | Advanced |
+| - | - | - |
+| Trade fee | 1% | buy and sell rates set independently, each 0 - 10% |
+| Platform's cut | 0.5% | **min(half the rate, 1%)** |
+| Creator's cut | 0.5% | the rest |
+
+| Rate paid | Platform | Creator |
+| - | - | - |
+| 1% | 0.5% | 0.5% |
+| 4% | 1% | 3% |
+| 10% | 1% | 9% |
+
+A token at 1% on buys and 10% on sells pays the platform 0.5% of each buy and 1% of each sell.
+
+## Where each cut goes
+
+| Cut | Base | Robinhood Chain | Arc |
+| - | - | - | - |
+| Platform | \$BSTONK buyback and burn | converted to USDG, held on 4663 | converted to USDC, held on Arc |
+| Creator, Simple | your fee address by default. **Recommended** sends half to holders as dividends, half of that via the \$BSTONK basket | your fee address by default, or half to holders | your fee address by default, or half to holders |
+| Creator, Advanced | the [wedges](/launching#the-wedges) in the shares you set | the wedges, minus the \$BSTONK basket | the wedges, minus the \$BSTONK basket |
+
+Same rates, different destinations. [Why →](/chains#where-the-platforms-cut-goes)
+
+## The anti-sniper toll
+
+Buys in a launch's opening window pay a rate decaying from up to 99% to
+the buy tax. The platform's cut stays capped at 1% throughout; everything
+above flows through the creator's split. Sells never pay it.
+[Launching →](/launching#protections)
+
+## Nothing changes after launch
+
+Rates and split are enforced by the pool's hook and immutable - by anyone.
+
+<AccordionGroup>
+  <Accordion title="The platform cut as a formula">
+    $\text{platform} = \min(\tau/2,\ 100\ \text{bps})$, $\text{creator} = \tau - \text{platform}$, for $0 \le \tau \le 1000$ bps. The platform's share *as a proportion* falls as the tax rises: 50% of 1%, 25% of 4%, 10% of 10%. No tiers, no discounts.
+  </Accordion>
+
+  <Accordion title="Why volume, not market cap, sets what holders earn">
+    $\text{paid per day} = V_{24h} \times r / 10{,}000$. Market cap is not in it. A \$2M token turning over its cap daily pays more than a \$50M token that barely trades.
+  </Accordion>
+
+  <Accordion title="What a trader receives">
+    $\text{out} = (1 - \tau/10{,}000) \cdot f_{\text{pool}}(x)$. The tax composes with price impact inside the swap. An aggregator that quotes the curve alone and sets `minOut` from it reverts every time.
+  </Accordion>
+</AccordionGroup>
+
+
+This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

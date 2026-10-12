@@ -1,0 +1,108 @@
+<!-- Snapshot of https://docs.basestonk.io/dividend-baskets.md taken 2026-10-10T17:22:37.428Z. Live version: https://docs.basestonk.io/dividend-baskets -->
+
+# Dividend baskets
+
+> Holders are paid a share of every trade, automatically, in up to ten assets the creator picked.
+
+A launch pays its holders a percentage of **every trade's volume**, in up
+to ten assets of the creator's choosing, converted on-chain as people
+trade. Nothing to claim. Nothing to trust.
+
+## How it works
+
+<Steps>
+  <Step title="The creator picks the basket at launch">
+    Up to ten assets with weights, from the pairs the chain admits.
+  </Step>
+
+  <Step title="A share of every trade flows in">
+    The rewards percentage, taken inside the swap from what the trade pays out: the pair on a sell, the token itself on a buy.
+  </Step>
+
+  <Step title="The contracts buy the assets">
+    Through real markets, with a floor so holders are never quietly shortchanged. No bot, no middleman, no conversion fee.
+  </Step>
+
+  <Step title="Every qualifying holder gets their share">
+    Automatically, as people trade. Claiming is optional, never required.
+  </Step>
+</Steps>
+
+## Who qualifies
+
+On launches since **V7 on Base** (2026-10-03), two rules decide who earns:
+
+* **A minimum holding.** A wallet earns while it holds at least 1/100,000 of
+  supply - **10,000 tokens** on a 1B launch. The exact figure is the token's
+  `minHolding()`. Below it, the wallet earns nothing and takes no place in
+  the payout queue, so an airdrop of dust to thousands of wallets neither
+  dilutes real holders nor slows their payouts.
+* **No same-block earnings.** Tokens bought in a block earn nothing from
+  fees that arrive in that same block. Buying, claiming and selling in one
+  transaction - the flash-loan pattern - pays zero.
+
+Earlier Base launches, and launches on Robinhood Chain and Arc, pay every
+holder pro rata with no minimum.
+
+The menu is the chain's admitted pairs: on Base, tokenized stocks, ETFs,
+cbBTC, \$BSTONK and several hundred ecosystem tokens; on Robinhood Chain,
+the Robinhood stock tokens, USDG and WETH. With no basket, dividends are
+paid in the pair.
+
+## What it adds up to
+
+At a 3% holder share:
+
+| Daily volume | Paid to holders / year | as % of a \$2M cap | \$5M | \$10M |
+| - | - | - | - | - |
+| \$200k | \~\$2.2M | 110% | 44% | 22% |
+| \$500k | \~\$5.5M | 275% | 110% | 55% |
+| \$1M | \~\$11M | 550% | 220% | 110% |
+
+The share taken from sells is paid in **the assets themselves**, real
+tokenized stock. The share taken from buys arrives as the token, and on
+Base it is paid to holders as the token.
+
+<Note>
+  Arithmetic, not a promise. Volume is the input nobody can guarantee. The percentage, the immutable split and the on-chain floor are what the contracts guarantee.
+</Note>
+
+## The controller seat
+
+The basket's **composition** sits behind a seat. The **percentage of volume** does not - that is fixed at launch, seat or no seat.
+
+| Seat holder can | Seat holder cannot |
+| - | - |
+| Re-weight or swap the basket's assets | Change the rewards percentage |
+| Hand the seat to another address | Touch dividends already paid |
+| Renounce it - one way, no undo, not even by the platform | |
+
+| Closing the seat | Base | Robinhood Chain |
+| - | - | - |
+| At launch | tick *renounce basket control* | not on the form (same on Arc) |
+| Later | `renounceBasket()` | hand the seat to a burn address (same on Arc) |
+
+Whether a seat is live is public on-chain state. Rebuilding a basket
+changes where *future* dividends go; value in flight still reaches
+holders on the same maths.
+
+## The honest edges
+
+| If | Then |
+| - | - |
+| An asset cannot be bought at a fair price right now | that share is paid in the pair, visibly, never lost |
+| A conversion would land below fair value | it is refused and retried smaller |
+| The basket is empty | dividends in the pair |
+| The seat is still live | the mix can change - check on-chain |
+
+## Where to see it
+
+Tokens tagged **BASKET REWARDS** pay a basket. The token page shows the
+assets and weights, each holder's running totals, and what is waiting.
+Your [portfolio](/holding#portfolio) gathers what is waiting across every
+token in its **Claimable** card, and the dividends you have received
+under **Earnings** on the **Launches** tab.
+[Driving the seat from code →](/integration/onchain#the-basket-controller-seat)
+
+
+This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

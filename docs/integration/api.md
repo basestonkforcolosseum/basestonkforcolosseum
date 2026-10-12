@@ -1,0 +1,554 @@
+<!-- Snapshot of https://docs.basestonk.io/integration/api.md taken 2026-10-10T17:22:37.428Z. Live version: https://docs.basestonk.io/integration/api -->
+
+# REST API
+
+> Indexed data for every launch on Base, Robinhood Chain and Arc. Open reads, no key, no charge.
+
+`https://api.basestonk.io` - what BaseStonk's own interface reads. No key
+for reads, and nothing is charged: the API is free. The v4 accounting is already done; raw-chain integrations that
+assume v2/v3 pairs read \$0 liquidity.
+
+Machine client? The same routes under `/api/v1` add coded errors, one
+envelope and the `/prepare` endpoints ([AI agents](/integration/agents)).
+
+The machine-readable reference is the OpenAPI 3.1 document at
+`https://api.basestonk.io/api/v1/openapi.json`: every public route, 101
+operations, generated from the same route declarations the server
+registers, so it cannot list a route the server lacks or miss one it
+serves. `/api/v1/llms.txt` is the plain-text version of the operations
+tagged `agents`. Both are cached an hour. This page covers what an
+integrator reaches for; the document has the rest (referral, bridge,
+OAuth).
+
+Two things in the document are for agents. The agent-tier operations
+declare their security as `agentBearer` or `agentOAuth` (scope `prepare`),
+and sixteen operations carry `x-mcp-tools`, naming the
+[MCP](/integration/mcp) tools that call them - so the MCP server and this
+reference are one description, not two.
+
+## The chain
+
+| `{chain}` | Id | Explorer |
+| - | - | - |
+| `base` | 8453 | Basescan |
+| `robinhood` | 4663 | Blockscout |
+| `arc` | 5042 | Arcscan |
+
+`?chain=` on token and wallet routes (absent means `base`); a path segment
+on venue routes. Wrong chain for a token is `404`, never the other index.
+Endpoints that exist on one chain only are marked.
+
+## Rate limits
+
+Per client IP, cost-weighted. The shared `api` lane runs on a
+**five-minute** window; the small lanes run per minute.
+
+| Lane | Budget | Covers |
+| - | - | - |
+| `api` | **1,500 units / 5 min** | every `/api/*` read not listed below |
+| `img` | 600 / 5 min | `/api/img` and `/api/card`, instead of `api` |
+| `paircheck` | 30 / min | `/paircheck`, on top of `api` |
+| `uploads` | 6 / min | image and metadata uploads |
+| `ingest` | 20 / min | error and CSP reports |
+
+A signed agent bearer moves the `api` lane onto your wallet; see
+[AI agents](/integration/agents#budgets).
+
+| Request | Units |
+| - | -: |
+| any request | 1 |
+| plus, on `/tokens/*` and `/basket-assets/*` | 1 per 100 rows of `limit` (at least 1) |
+| plus, on `/ecosystem/*` | the same, and 5 more with `q=` |
+| plus, on `/pairusd-batch/*` | 1 per 20 addresses (at least 1) |
+| plus, on a `/prepare` call | 10 |
+
+So a token page read costs 2, `limit=1000` costs 11, and an ecosystem
+search costs 7.
+
+Not metered at all, because a refused answer here would make an interface
+show something false: `/basket/offvault`, `/basket/usd`, `/basket/history`,
+`/pairstates/{chain}` and `/pairs/{chain}`, on both prefixes.
+
+Responses carry `x-ratelimit-limit`, `x-ratelimit-remaining` and
+`x-bstonk-identity` (`ip` or `wallet`). Exhausted:
+
+```json theme={null}
+HTTP 429   retry-after: 21
+{ "error": "rate limited", "retryAfter": 21 }
+```
+
+<Warning>
+  **A 429 is "refused", never "empty".** Honour `retry-after`. Prefer one batched call over per-item loops.
+</Warning>
+
+## Errors
+
+Unversioned routes answer a sentence:
+
+| Status | Body | Do |
+| - | - | - |
+| `400` | `{"error":"unknown chain"}` | use a chain from the table above |
+| `400` | `{"error":"invalid address"}` | fix it; do not retry unchanged |
+| `400` | `{"error":"bad interval"}` | pick from the candles list |
+| `400` | `{"error":"<field> <reason>","detail":{...}}` | fix the named field; `detail` is the per-field map |
+| `404` | `{"error":"token not found"}` | verify; do not loop |
+| `413` | `{"error":"at most 100 pairs per request","max":100}` | split the batch |
+| `429` | `{"error":"rate limited","retryAfter":n}` | wait, then resume |
+| `503` | `{"error":"..."}` | capped exponential backoff; honour `retry-after` when sent |
+
+### The v1 envelope
+
+Everything under `/api/v1`, **including the limiter's 429**, answers errors
+as one object:
+
+```json theme={null}
+{
+  "error": {
+    "code": "not_found",
+    "message": "token not found",
+    "action": "Verify the chain and identifier. Do not retry an unchanged 404.",
+    "requestId": "req_125459b9182243fb8a60"
+  }
+}
+```
+
+`message` is the unversioned sentence. `retryAfter` rides along on a 429,
+`detail` on a validation refusal, `checkpointTx` on a Robinhood `409`.
+`action` is present only for the codes below; branch on `code`, never on
+`message`.
+
+| `code` | Means | `action` says |
+| - | - | - |
+| `rate_limited` | budget or workflow ceiling spent | wait `retry-after`, repeat |
+| `unavailable` | a dependency could not answer | backoff with jitter |
+| `not_found` | no such record on that chain | do not retry unchanged |
+| `unknown_chain` | bad `chain` | use a listed chain |
+| `invalid_request` | a malformed parameter | correct it |
+| `validation_failed` | a body or query failed its schema | correct the fields in `detail` |
+| `unauthorized` | bearer missing, expired or bad signature | mint a new one |
+| `forbidden` | not your resource | use the owning wallet |
+| `conflict` | the address already holds code | |
+| `internal` | our fault | |
+
+Any other refusal is coded as its message in snake case (for example
+`no_pair_registry_on_this_chain`), so a new error is never uncoded.
+
+Every v1 response also carries `x-request-id` (yours echoed if you send
+one; quote it when reporting a problem) and `x-bstonk-api-version: 1`. A
+non-GET echoes your `Idempotency-Key`.
+
+## Pagination
+
+`limit` and `offset`, answered as `{ total, hasNext, <rows>: [...] }`
+(`/tokens` adds `sort`; `/ecosystem` has no `hasNext`, compare `total`).
+Under `/api/v1` the same body also gains `items` (the rows again) and
+`nextOffset` (`null` on the last page).
+
+| Endpoint | Default | Max |
+| - | - | - |
+| `/tokens` | 24 | 200 |
+| `/tokens/{address}/trades`, `/holders` | 25 | 200 |
+| `/ecosystem` | 50 | 1000 |
+| `/basket-assets` (its `ecosystem` half) | 200 | 1000 |
+| `/creators/{address}/tokens` (`limit` only) | 200 | 500 |
+
+Two routes page backwards instead: candles take `limit` (300, max 1000)
+and `before=<unix seconds>`; a wallet's trades take `limit` and
+`before=<cursor>` and hand back the next cursor as `nextBefore`.
+
+Responses evolve **additively**. Ignore unknown fields. `taxBps` is
+backfilled for pre-V6 launches whose `buyTaxBps`/`sellTaxBps` are null;
+treat it as both directions.
+
+## Endpoints
+
+### Tokens
+
+```bash theme={null}
+GET /api/launchpad/tokens?chain={chain}
+```
+
+Every launch with pair, hook, price, market cap, volume, holders and tax.
+Filters: `sort` (`trending` `age` `marketcap` `volume` `holders`), `dir`,
+`q`, `pair` (an address, or `crypto` / `memes` / `stocks`), `generation`
+(`v1`..`v6` `simple` `b20`), `features` (comma-separated AND of
+`platform` `og` `rewards` `buyback` `auto-liquidity` `simple` `advanced`),
+`addresses` (up to 50 - a watchlist in one call). `pair` also takes up to
+12 addresses joined by commas. `view=list` returns only the fields a list
+row draws; tokens carrying an operator notice are left off the shelf unless
+you pass `flagged=1`, `q` or `addresses`. Cached 5 seconds.
+
+```bash theme={null}
+GET /api/launchpad/tokens/facets?chain={chain}
+```
+
+What the pair filter is made of: token counts per shelf and per pair, and
+pairs outside the registry under `other`. Cached 60 seconds.
+
+```bash theme={null}
+GET /api/launchpad/tokens/{address}?chain={chain}
+```
+
+One token, as `{ "token": {...} }`. Add `tx=<launch hash>` and a token not
+yet indexed is indexed from that receipt on the spot.
+`minHoldingTokens` is set on V7 launches that pay dividends: the whole tokens a
+wallet must hold to earn (the token's `minHolding()`, 1/100,000 of supply). It
+is `null` on every other launch, which pays every holder.
+
+```bash theme={null}
+GET /api/launchpad/tokens/{address}/candles?chain={chain}&interval=1m
+```
+
+`{ interval, candles: [{ t, o, h, l, c, v }] }`, oldest first, `t` in unix
+seconds. `interval`: `1s` `1m` `5m` `15m` `1h` `4h` `1d` (default `5m`);
+anything else is `400 bad interval`. `limit` is 300 by default, 1000 at
+most. `1s` is built from the trades themselves; `1m` to `15m` are rolled up
+from stored one-minute bars, `1h` and wider from hourly ones.
+`before=<unix seconds>` pages backwards through history; an empty page is
+the start of it. The newest bar is marked to the token's current price, and
+a token that has never traded gets flat zero-volume bars at that price.
+
+```bash theme={null}
+GET /api/launchpad/tokens/{address}/trades?chain={chain}
+GET /api/launchpad/tokens/{address}/holders?chain={chain}
+GET /api/launchpad/tokens/{address}/pressure?chain={chain}
+```
+
+Trades are newest first and take `trader=` (a whole address) and `side=`
+(`buy` or `sell`). Holders are largest first and take `q=` (`0x` plus four
+or more hex characters, matched as a prefix). Pressure is the momentum
+panel: buys, sells, volume each way, distinct buyers and sellers and the
+price change, over `5m` `1h` `4h` `24h`.
+
+### Wallets
+
+```bash theme={null}
+GET /api/launchpad/holders/{address}/tokens
+GET /api/launchpad/creators/{address}/tokens?chain={chain}
+GET /api/launchpad/wallets/{address}/positions?chain={chain}
+GET /api/launchpad/wallets/{address}/trades?chain={chain}
+GET /api/launchpad/rewards/{address}?chain={chain}
+GET /api/launchpad/tokens/{token}/rewards/{address}?chain={chain}
+```
+
+Holdings are cross-chain, take no `chain`, and return the largest 100.
+Creator tokens add `volumeAllUsd` and `creatorShareBps` (this wallet's own
+share, `null` when the hook could not be read). Positions are the
+portfolio's PnL rows (entry, holding, realised, unrealised) and take
+`token=` to narrow, which also returns that token's trades.
+
+A wallet's trades are its activity feed, newest first:
+
+| Param | |
+| - | - |
+| `limit` | 1-100, default 50 |
+| `before` | opaque cursor; pass the previous page's `nextBefore` unchanged |
+
+The answer is `{ trades: [...], nextBefore }`. Each row carries `token`,
+`symbol`, `name`, `imageUrl`, `side`, `amountToken`, `volumeUsd`,
+`priceUsd`, `txHash` and `createdAt`, priced as the trade was stamped.
+
+A page never holds more than `limit` rows. The cursor marks the last row
+by its time to the microsecond and its id, so trades that share a block
+split across pages with none lost or repeated. `nextBefore` is `null` when
+there is nothing older. Treat it as opaque: a cursor that does not decode
+is `400 invalid before`. A bare ISO time is still accepted, for clients
+holding one from before the cursor, and pages from that instant.
+
+Rewards are dividends received across every token, or on one token with
+the live pending amount (`404` if the token pays none; `pending` is `null`
+when the distributor could not be read, never a guessed zero; cached
+privately 10 seconds).
+
+```bash theme={null}
+GET /api/profile/{address}
+```
+
+A creator's public profile: display name, bio, avatar and linked Telegram,
+or `profile: null`.
+
+### Pairs and pricing
+
+```bash theme={null}
+GET /api/launchpad/pairusd/{chain}?pair=0x…
+GET /api/launchpad/pairusd-batch/{chain}?pairs=0x…,0x…
+GET /api/launchpad/paircheck/{chain}?pair=0x…
+GET /api/launchpad/pair-identity/{chain}/{address}
+GET /api/launchpad/ecosystem/{chain}
+```
+
+`pairusd` is `{ usd }`, USD per pair token from the registry the launcher
+prices with, or `503` when nothing can price it. The batch form is
+`{ prices: { address: usd | null } }` and takes up to 100; more is a `413`,
+never a trimmed answer. `paircheck` answers whether an address can be
+launched against right now (`hasMarket` needs \$2,500 of depth on Base) and
+names any namesake risk; cached 10 minutes on Base and Arc, 1 minute on
+Robinhood Chain. `pair-identity` resolves symbol, name and artwork for any address,
+curated or not; cached 5 minutes.
+
+```bash theme={null}
+GET /api/launchpad/pairs/{chain}
+GET /api/launchpad/pairstates/{chain}
+```
+
+`pairs` is every pair a launch can be priced against, as one priced list:
+`{ chain, at, total, rows }`, each row with `address`, `symbol`, `tags`,
+`priceUsd`, `liquidityUsd`, a `light` (`green` `amber` `red`) and a `state`
+(`ready` `no-lp` `unpriced` `wakeable`). `q` filters by name, symbol or
+address, `tag` by tag, `limit` defaults to 2000 (max 5000). Cached 30
+seconds. `pairstates` is the pair registry's answer for every registered
+pair on a chain that has one (Robinhood Chain and Arc; Base answers `400`):
+`{ chain, at, states: { address: "priced" | <refusal> } }`, cached 20
+seconds.
+
+`ecosystem` is the chain's pair catalogue. On Base, `eco` (`clanker`
+`virtuals` `bankr`) browses one catalogue and absent browses all three;
+on Robinhood Chain it is the 194 stocks; on Arc it is empty. `q` searches name, symbol or
+address. Browsing Base lists priced rows only. Cached 30 seconds.
+
+```bash theme={null}
+GET /api/launchpad/basket-assets/base
+GET /api/launchpad/gatedroute/base?pair=0x…
+```
+
+Base only. `basket-assets` is the dividend-basket menu - `registered`
+(the curated set, with `category`, `launchable`, `needsIssuance`) plus
+`ecosystem` (ranked, paged). `gatedroute` returns the gate-verified route,
+`issuerFactory` (zero for a creator-chosen pair) and `usdPerPair` for
+**any** address with a market - what `launchGated` takes. A route that
+cannot be built is a `422` naming the gate's refusal. Cached 60 seconds.
+
+### The basket
+
+```bash theme={null}
+GET /api/launchpad/basket/rounds
+GET /api/launchpad/basket/vault?wallet=0x…
+GET /api/launchpad/basket/holdings/base?vault=0x…
+GET /api/launchpad/basket/usd
+GET /api/launchpad/basket/history
+GET /api/launchpad/basket/offvault
+```
+
+Base only; the \$BSTONK dividend vault. `rounds` is every payout round
+across the current and retired vault, numbered as one series (cached 30
+seconds, `503` with `retry-after` while unreadable). `vault` adds the
+per-round detail and, with `wallet=`, that wallet's receipts. `holdings`
+is what the vault holds now (`holdings: null` means not read yet, never an
+empty vault; cached 15 seconds).
+
+The last three are records the keeper writes, unmetered and on both
+prefixes: `usd` is what each round was worth when paid, `history` is the
+retired vault's rounds as they stood (`{ vault, frozenAt, rounds }`), and
+`offvault` is payouts routed around the vault, where the chain records one
+recipient for a round that paid many (`{ records: [{ round, asset, symbol,
+holders, total, at }] }`).
+
+### Venue
+
+```bash theme={null}
+GET /api/launchpad/stats/{chain}
+GET /api/launchpad/burn/base
+GET /api/launchpad/burn/base/history
+```
+
+`stats` is that chain's tokens, trades, volume, holders, revenue and
+`basketPaid`, plus a `venue` block summed across every chain
+(`venue.aggregated` names the summed fields; \$BSTONK's burn is
+deliberately not one). `burn` is the \$BSTONK burn total; `history` is the
+daily series.
+
+| Route | Fresh within |
+| - | - |
+| `stats` | 30 seconds |
+| `burn` | 60 seconds |
+| `burn/.../history` | 5 minutes |
+
+### Launchpads compared
+
+```bash theme={null}
+GET /api/launchpad/comps
+GET /api/launchpad/comps/history?days=30
+```
+
+BaseStonk beside the other launchpads - The Stonks Exchange, o1, stonk.fun,
+Pons, Bankr, Clanker, Virtuals - on one accounting rule for every venue,
+BaseStonk included: DefiLlama where the venue has an adapter, the venue's
+own published dashboard where it does not, our ledger for us; CoinGecko
+market cap for everyone. Refreshed daily; `source` names the accounting on
+every row and a `null` is a figure no source publishes, never a zero.
+
+| field | |
+| - | - |
+| `rows[]` | per venue: `marketCapUsd`, `fees30dUsd`, `volume30dUsd`, `toHolders30dUsd`, `feesToHoldersPct`, and the two ratios that make venues comparable - `feesPer100Cap` and `volumePer1Cap` |
+| `basestonk` | our own row |
+| `implied[]` | what BSTONK's market cap would be at each peer's `feesPer100Cap` / `volumePer1Cap`: our own 30-day fees or volume divided by their ratio. Arithmetic on the row, not a forecast |
+| `summary[]` | the same in sentences, with BaseStonk's rank on each ratio |
+
+`history` returns every venue's daily rows for the last `days` (1-365) so
+the ratios can be charted over time. Cached five minutes at the edge. The
+same table drives the [Dune dashboard](https://dune.com/xipz/basestonk) and
+the [MCP](/integration/mcp) tool `get_platform` with `include: ["comps"]`.
+
+<Note>
+  Quote the ratios, not the raw volume. Volume rewards the biggest venue; fees
+  or volume per dollar of market cap is the measure on which a small venue can
+  be shown to be doing more with less - and on which BaseStonk is not first on
+  every day, which is exactly why the row that beats it stays in the table.
+</Note>
+
+### Launch presets
+
+```bash theme={null}
+GET /api/launchpad/templates/{id}
+```
+
+A partner's preset for the create page, opened by link:
+`https://basestonk.io/create?template=reppo-datanet` (add `name=` and
+`symbol=` to prefill those too). The response is the preset with its payee
+addresses resolved - pair, buy/sell tax, the partner's payee and its minimum
+share of the creator fee, the minimum dev-buy lock, the anti-sniper window and
+the holder limit - plus `ready`. When `ready` is `false`, `missing` names the
+server setting the partner has not supplied yet and the form opens plain.
+An unknown id is a `404`. Cached 60 seconds.
+
+The form fixes the pair and the taxes, locks the partner's payee row at its
+floor, and refuses to launch below the minimum lock. The creator signs in
+their own wallet as with any launch; nothing about a preset touches the API
+with a key. A wallet calling the launcher directly is bound only by the
+launcher - the preset is a promise the form keeps, not a rule the chain does.
+
+**After the launch, back to the partner.** A preset can name its partner's next
+step, and the success screen then leads with **Continue on {partner}**, the
+token page one tap below it. The partner can set the destination per link
+with `next=`, using the placeholders `{token}`, `{chain}`, `{symbol}`, `{name}`
+and `{tx}`:
+
+```text theme={null}
+https://basestonk.io/create?template=reppo-datanet&next=https%3A%2F%2Freppo.ai%2Fdatanets%2Fnew%3Ftoken%3D%7Btoken%7D
+```
+
+`next=` is honoured only for an `https` URL on the partner's own host or one
+of its subdomains; anything else falls back to the preset's own destination,
+so a link cannot send a creator somewhere else. URL-encode the value.
+
+| id | partner | preset |
+| - | - | - |
+| `reppo-datanet` | [Reppo](https://reppo.ai) | paired with \$REPPO · 2% buy / 2% sell · 40% of creator fees to Reppo (locked) · 30-day dev-buy lock · 15-minute anti-sniper window · 5% holder limit |
+
+The `draft_launch` [MCP](/integration/mcp) tool takes the same `template`.
+
+### Writes
+
+```bash theme={null}
+POST /api/launchpad/images
+POST /api/launchpad/metadata
+POST /api/launchpad/tokens/{address}/metadata?chain={chain}
+POST /api/launchpad/tokens/{address}/controller?chain={chain}
+GET  /api/launchpad/stored/{id}
+```
+
+The launch and token-page writes, and every one names a wallet.
+`images` pins a `file` field (PNG, JPEG, WebP or GIF, up to 5MB) and
+`metadata` pins a token's metadata document; both answer with `uri` and
+`gateway` and spend the `uploads` lane. `tokens/{address}/metadata` is the page
+controller's edit of description, image and links, merged onto what is
+shown; `controller` hands the page to `{ "to": "0x…" }`. `stored` serves an
+upload IPFS did not take.
+
+Each write accepts either proof of the wallet:
+
+| Send | Signs for |
+| - | - |
+| `x-wallet-address`, `x-wallet-signature`, `x-wallet-expires` | one action: `upload`, `token:edit` (detail: the token) or `token:handover` (detail: the token and the recipient) |
+| `Authorization: Bearer <token>` | a bearer carrying the matching scope, `upload`, `token:edit` or `token:handover`, minted by [Sign-In with Ethereum](/integration/agents#sign-in-with-ethereum) |
+
+When `x-wallet-address` is present the signed headers are what is checked.
+A bearer buys no extra upload budget: the `uploads` lane stays per IP.
+
+### Live updates
+
+```
+wss://api.basestonk.io/ws
+```
+
+The site's list and charts run on this; polling is the fallback. Connect
+from a server or a bot: a browser page on another origin is refused `403`.
+
+The first frame is `{ "type": "hello", "epoch": "…", "seq": 1234 }`. Then
+subscribe (at most 50 topics per socket):
+
+```json theme={null}
+{ "type": "subscribe", "topics": ["tokens:new", "token:0x…", "candles:0x…:1m"] }
+{ "type": "unsubscribe", "topics": ["token:0x…"] }
+{ "type": "ping" }
+```
+
+| Topic | Events |
+| - | - |
+| `tokens:new` | `token.new` |
+| `token:<address>` | `token.new`, `token.trade`, `token.touched`, `token.state` |
+| `candles:<address>:<interval>` | `candle`, `token.touched` |
+
+Addresses are lowercase; intervals are the candle intervals above.
+
+| Event | Carries | Do |
+| - | - | - |
+| `token.new` | `token`, the full record | add it |
+| `token.trade` | `token`, `price`, `volumeUsd`, `side`, and `rows` / `holders` as `/trades` and `/holders` serve them | prepend |
+| `token.touched` | `token` | refetch that token's rows |
+| `token.state` | `token` | refetch what the token is (payees, basket, seats) |
+| `candle` | `chain`, `token`, `interval`, `candle` `{t,o,h,l,c,v}` | replace the bar at `t`; it is a snapshot, not a delta |
+
+`ping` answers `{ "type": "pong" }`. The site pings every 30 seconds and
+treats a missing pong as a dead socket; the server's idle timeout is two
+minutes. A message that fails validation closes the socket (code `1008`),
+as does a 51st topic. Up to 12 sockets per IP.
+
+#### Resuming
+
+Every broadcast frame carries `seq`, which rises within one server process;
+`epoch` names the process. Remember the last `seq` you handled. On
+reconnect, if the new `hello` has the **same** `epoch`, resubscribe with
+where you were:
+
+```json theme={null}
+{ "type": "subscribe", "topics": ["token:0x…"], "since": { "epoch": "…", "seq": 1234 } }
+```
+
+The server replays every frame after that `seq` on your topics (it holds
+up to the last two minutes), then sends `{ "type": "resumed", "replayed": n }`.
+If it cannot cover the gap it sends `{ "type": "resync" }`: refetch over
+REST, as after any reconnect without `since`. A different `epoch` means a
+new process; subscribe without `since` and refetch. `hello`, `pong`,
+`resumed` and `resync` carry no `seq`. Drop any frame whose `seq` you have
+already handled.
+
+#### Reorgs
+
+On Base a trade reaches the feed and the chart at the head of the chain,
+usually within a second of its block, and is not final there. A confirming pass
+two blocks behind the head re-reads each window against the block hashes
+the rows were stored under. When a block was replaced, every row from it
+onward is removed (trades, transfers, fees), the candles, holder balances
+and token stats built from them are rebuilt, and the chain is read again.
+Each token touched gets `token.touched` on its `token:` topic and on every
+`candles:` topic for it. Refetch on that event, and do not treat a trade
+row as settled until your own node has it at the depth you need.
+
+### Images
+
+```bash theme={null}
+GET /api/img/{address}?chain={chain}&w=64
+GET /api/card/token/{chain}/{address}.png
+```
+
+Resized token artwork, and the 1200x630 share card the site unfurls. Both
+spend the `img` lane, not `api`. Artwork is served cross-origin, and a
+rendered image is cached as immutable; a card is cached 5 minutes.
+
+<Note>
+  Eligibility is the chain's word, not this cache's. On-chain vetting and rebuild rules: [on-chain page](/integration/onchain#launching-programmatically).
+</Note>
+
+
+This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.
